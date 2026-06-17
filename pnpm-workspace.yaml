@@ -1,6 +1,10 @@
 allowBuilds:
+  bufferutil: true
+  esbuild: true
   sharp: true
   unrs-resolver: true
 onlyBuiltDependencies:
+  - bufferutil
+  - esbuild
   - sharp
   - unrs-resolver
