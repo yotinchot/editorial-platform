@@ -1,4 +1,9 @@
+import { config } from "dotenv";
 import { defineConfig } from "drizzle-kit";
+
+// drizzle-kit does not auto-load .env.local (that is a Next.js convention).
+// Load it explicitly so all db:* scripts pick up local credentials.
+config({ path: ".env.local" });
 
 /**
  * Drizzle Kit configuration.

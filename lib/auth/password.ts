@@ -1,21 +1,52 @@
+import { createHash, timingSafeEqual } from "crypto";
+
 /**
  * lib/auth/password.ts
  *
- * TODO (Authentication Phase):
+ * Single-author password validation.
  *
- * Responsibilities:
- * - Compare a plaintext password attempt against the stored admin credential.
- * - The "stored credential" is the ADMIN_PASSWORD environment variable —
- *   there is no password hashing required because this is a single-author
- *   platform and the secret never touches the database.
+ * Security model
+ * ──────────────
+ * The admin password lives in ADMIN_PASSWORD (env var). It is never hashed
+ * at rest — it's a shared secret between the operator and the server, not
+ * something a user chose from a pool of millions. The env var itself is the
+ * credential store.
  *
- * Security notes:
- * - Use `crypto.timingSafeEqual` to prevent timing-attack enumeration.
- * - Never log the attempt value, even in development.
- * - The env var is read server-side only; it must never appear in client bundles.
+ * Timing-safe comparison
+ * ──────────────────────
+ * A naïve `attempt === password` leaks password length via timing: Node's
+ * string comparison short-circuits on the first differing character, so an
+ * attacker measuring latency can infer how many leading characters matched.
  *
- * Example surface:
- *   export function verifyAdminPassword(attempt: string): boolean
+ * `crypto.timingSafeEqual` requires both buffers to be the same byte length,
+ * which reveals length via a thrown error. To sidestep this, both values are
+ * SHA-256-hashed first: the digests are always 32 bytes regardless of input
+ * length, making the comparison constant-time with no length oracle.
+ *
+ * Threat model note: SHA-256 here is not a password *strengthener* — it is
+ * purely a length-normaliser to satisfy `timingSafeEqual`. The strength of
+ * the authentication depends entirely on ADMIN_PASSWORD being unguessable.
  */
 
-export {};
+/**
+ * Compare a login attempt against the ADMIN_PASSWORD environment variable.
+ *
+ * @returns `true` if the attempt matches, `false` otherwise.
+ * @throws  if ADMIN_PASSWORD is not set in the environment.
+ */
+export function verifyAdminPassword(attempt: string): boolean {
+  const adminPassword = process.env.ADMIN_PASSWORD;
+
+  if (!adminPassword) {
+    throw new Error(
+      "ADMIN_PASSWORD is not set. " +
+        "Add it to .env.local for local development or to your Vercel project environment variables.",
+    );
+  }
+
+  // Hash both sides to equalise buffer length before constant-time compare.
+  const attemptHash = createHash("sha256").update(attempt).digest();
+  const passwordHash = createHash("sha256").update(adminPassword).digest();
+
+  return timingSafeEqual(attemptHash, passwordHash);
+}

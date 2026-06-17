@@ -1,13 +1,11 @@
-import { Fraunces, Inter, JetBrains_Mono } from "next/font/google";
+import {
+  Fraunces,
+  Inter,
+  JetBrains_Mono,
+  Noto_Sans_Thai,
+  Noto_Serif_Thai,
+} from "next/font/google";
 
-/**
- * Typography system.
- *
- * - `serif` (Fraunces) — editorial display face for headings and pull quotes.
- *   Optical sizing gives it a soft, literary character at large sizes.
- * - `sans` (Inter) — body copy and UI. Neutral and highly legible at small sizes.
- * - `mono` (JetBrains Mono) — code blocks inside long-form content.
- */
 export const fontSerif = Fraunces({
   variable: "--font-serif",
   subsets: ["latin"],
@@ -28,4 +26,20 @@ export const fontMono = JetBrains_Mono({
   weight: ["400", "500"],
 });
 
-export const fontVariables = `${fontSerif.variable} ${fontSans.variable} ${fontMono.variable}`;
+// Thai fallback fonts — cascade after Latin faces so Thai characters render
+// with appropriate letterforms and generous x-height for long-form reading.
+export const fontSerifThai = Noto_Serif_Thai({
+  variable: "--font-serif-thai",
+  subsets: ["thai"],
+  weight: ["400", "600", "700"],
+  display: "swap",
+});
+
+export const fontSansThai = Noto_Sans_Thai({
+  variable: "--font-sans-thai",
+  subsets: ["thai"],
+  weight: ["400", "500", "600"],
+  display: "swap",
+});
+
+export const fontVariables = `${fontSerif.variable} ${fontSans.variable} ${fontMono.variable} ${fontSerifThai.variable} ${fontSansThai.variable}`;

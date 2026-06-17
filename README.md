@@ -1,14 +1,6 @@
 # Field Notes
 
-A premium personal publishing platform for immersive travel storytelling, structured reading notes, and thoughtful essays.
-
-Inspired by Kinfolk, Medium, and premium travel publications — built for long-form Thai-language content with world-class editorial aesthetics.
-
----
-
-## Vision
-
-A single-author editorial journal that feels like a beautifully crafted independent publication. The reading experience takes priority over everything else. Typography, whitespace, and photography work together to create a calm, premium environment for long-form writing.
+A single-author editorial platform for immersive travel storytelling, structured reading notes, and thoughtful essays. Inspired by Kinfolk, Medium, and premium travel publications — built for long-form Thai-language content.
 
 ---
 
@@ -16,14 +8,13 @@ A single-author editorial journal that feels like a beautifully crafted independ
 
 | Layer | Technology |
 |---|---|
-| Framework | Next.js 16 (App Router) |
+| Framework | Next.js 16 (App Router, React 19) |
 | Language | TypeScript (strict mode) |
 | Styling | Tailwind CSS v4 |
 | Components | shadcn/ui |
-| Database | Vercel Postgres |
-| ORM | Drizzle ORM |
+| Database | Vercel Postgres (postgres.js + Drizzle ORM) |
 | Rich Text | TipTap |
-| Image CDN | Cloudinary (signed uploads) |
+| Image CDN | Cloudinary (signed uploads only) |
 | Validation | Zod |
 | Theme | next-themes |
 | Package Manager | pnpm |
@@ -33,84 +24,62 @@ A single-author editorial journal that feels like a beautifully crafted independ
 
 ## Architecture
 
-Feature-based, server-first. Server Components handle data fetching; client components are used only where interactivity is required.
+Server-first, feature-based. Server Components handle data fetching; client components are used only where interactivity is required.
 
 ```
-app/                  → Next.js App Router pages and layouts
+app/                  → Next.js App Router (pages, layouts, error/not-found boundaries)
+  [categorySlug]/     → Public category listing
+  [categorySlug]/[postSlug]/ → Public post page (SEO, JSON-LD, TOC, reading time)
+  about/              → About page
+  search/             → Full-text search (PostgreSQL ILIKE)
+  sitemap.ts          → Auto-generated XML sitemap
+  robots.ts           → robots.txt
+  admin/              → Admin panel (protected by HttpOnly session cookie)
+    login/            → Login form + server action
+    (protected)/      → Dashboard, post list, post editor
+
 components/
-  layout/             → Header, Footer (server components)
-  shared/             → Reusable UI primitives (Container, ThemeToggle, etc.)
-  ui/                 → shadcn/ui primitives (auto-generated)
+  layout/             → Header, Footer
+  shared/             → Container, ThemeProvider, ThemeToggle
+  article/            → ArticleContent (prose), TableOfContents
+  ui/                 → shadcn/ui primitives
+
 features/
-  posts/              → Post card, cover, types
-  categories/         → Topic grid, types
-  admin/              → Admin dashboard, editor (upcoming)
+  posts/              → PostCard, PostCover, PostSummary type, PostDetail type
+  categories/         → TopicGrid
+
 db/
-  schema/             → Drizzle table definitions (upcoming)
-  migrations/         → Auto-generated SQL migrations (upcoming)
-  index.ts            → Drizzle client (upcoming)
+  schema/             → Drizzle table definitions (posts, categories, post_categories, admin_sessions)
+  migrations/         → Committed SQL migration files
+  client.ts           → postgres.js + Drizzle client (server-only)
+
 lib/
-  auth/               → Session, password, cookie utilities (upcoming)
+  auth/               → session.ts, password.ts, cookies.ts
+  data/               → posts.ts, categories.ts, search.ts (DB queries)
+  metadata.ts         → SEO utilities: canonicalUrl(), ogImages(), SITE_URL, SITE_AUTHOR
+  reserved-slugs.ts   → Blocks reserved routes (admin, about, search, api…) from category slugs
+  reading-time.ts     → Thai-aware hybrid heuristic (Thai chars ÷ 5 + non-Thai tokens)
   constants.ts        → Site-wide copy and nav links
-  fonts.ts            → Next.js font configuration
   format.ts           → Date and reading-time formatters
-  placeholder-data.ts → Temporary content (removed in Phase 2)
-  utils.ts            → cn() helper
-actions/              → Server Actions (upcoming)
-hooks/                → Shared client hooks (upcoming)
-types/                → Cross-feature shared types (upcoming)
-proxy.ts              → Route protection middleware (auth logic upcoming)
+  toc.ts              → HTML → TOC entry extractor
+
+actions/
+  posts.ts            → createPost, updatePost, publishPost, deletePost
+  categories.ts       → createCategory, updateCategory, deleteCategory
+  images.ts           → Server-side Cloudinary signature generation (API_SECRET never leaves server)
+
+scripts/
+  seed.ts             → Development seed (idempotent — safe to re-run)
 ```
 
 ---
 
-## Phases
-
-| Phase | Description | Status |
-|---|---|---|
-| **1** | Project init, design system, homepage layout | ✅ Complete |
-| **1.5** | Cleanup, auth/DB scaffolding, documentation | ✅ Complete |
-| **2** | Vercel Postgres + Drizzle ORM schema | ⏳ Next |
-| **3** | Admin authentication (single-author) | 🔜 Planned |
-| **4** | Admin dashboard + TipTap rich text editor | 🔜 Planned |
-| **5** | Image upload via Cloudinary | 🔜 Planned |
-| **6** | Travel, Reading, Essay post types (custom TipTap nodes) | 🔜 Planned |
-| **7** | Article reading experience (TOC, reading time, zoom) | 🔜 Planned |
-| **8** | SEO, JSON-LD, Open Graph | 🔜 Planned |
-| **9** | Full-text search | 🔜 Planned |
-| **10** | Scheduled publishing + About page | 🔜 Planned |
-
----
-
-## Completed Features (Phase 1 + 1.5)
-
-- Next.js 16 App Router scaffold with TypeScript strict mode
-- Tailwind CSS v4 with warm editorial color palette (light + dark)
-- shadcn/ui component library initialized
-- Dark mode via next-themes (warm charcoal — not pure black)
-- Fraunces serif headings + Inter sans body (Thai font migration planned: Phase 2)
-- Header with site name, navigation, search link, theme toggle
-- Footer with nav links and social links
-- Reusable `Container`, `SectionHeading`, `PostCard`, `ImagePlaceholder` components
-- Homepage with 6 editorial sections:
-  - Featured Story (horizontal hero layout)
-  - Latest Stories (3-column grid)
-  - Travel Stories
-  - Reading Notes
-  - Explore Topics (category grid)
-  - About Preview
-- Feature-based folder architecture
-- Auth and DB foundation stubs with TODO documentation
-- ESLint, TypeScript, and build scripts configured
-
----
-
-## Development Workflow
+## Development Setup
 
 ### Prerequisites
 
 - Node.js 20+
-- pnpm (`npm install -g pnpm` or via `~/.npm-global`)
+- pnpm
 
 ### Install
 
@@ -122,35 +91,60 @@ pnpm install
 
 ```bash
 cp .env.example .env.local
-# Fill in the required values (see .env.example for documentation)
+# Fill in the required values — see .env.example for documentation
+```
+
+Required variables:
+
+| Variable | Purpose |
+|---|---|
+| `POSTGRES_URL` | Pooled connection string (runtime queries) |
+| `POSTGRES_URL_NON_POOLING` | Direct connection string (DDL migrations) |
+| `NEXT_PUBLIC_SITE_URL` | Production URL, no trailing slash |
+| `NEXT_PUBLIC_AUTHOR_NAME` | Author name for JSON-LD and OG metadata |
+| `ADMIN_PASSWORD` | Plain-text password (hashed in DB on first login) |
+| `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name |
+| `CLOUDINARY_API_KEY` | Cloudinary API key |
+| `CLOUDINARY_API_SECRET` | Cloudinary API secret (server-only, never sent to client) |
+
+### Database
+
+```bash
+pnpm db:migrate   # Apply pending SQL migrations to Postgres
+pnpm db:seed      # Seed development data (idempotent)
+pnpm db:studio    # Open Drizzle Studio in browser
+pnpm db:generate  # Generate new migration after schema changes
 ```
 
 ### Scripts
 
 ```bash
-pnpm dev          # Start development server (http://localhost:3000)
+pnpm dev          # Development server (http://localhost:3000)
 pnpm build        # Production build
 pnpm start        # Serve production build
 pnpm lint         # ESLint
 pnpm typecheck    # TypeScript type checking (no emit)
-pnpm db:generate  # Generate Drizzle migrations (Phase 2+)
-pnpm db:migrate   # Apply migrations to Vercel Postgres (Phase 2+)
-pnpm db:studio    # Open Drizzle Studio (Phase 2+)
-```
-
-### Git workflow
-
-```bash
-git add .
-git commit -m "Phase X — description"
-git push origin main
 ```
 
 ---
 
-## Environment Variables
+## Deployment (Vercel)
 
-See `.env.example` for the full list. Copy to `.env.local` for local development.
+1. Create a Vercel Postgres database in the Vercel dashboard.
+2. Add all required environment variables to Vercel project settings.
+3. Run `pnpm db:migrate` locally against the production database (requires `POSTGRES_URL_NON_POOLING`).
+4. Push to `main` — Vercel auto-deploys.
+
+ISR is configured at `revalidate = 3600` (1 hour) on all public pages. Revalidation also triggers on publish/save via `revalidatePath`.
+
+---
+
+## Security Notes
+
+- Admin password is compared with `timingSafeEqual` (timing-attack resistant).
+- Session tokens are stored as SHA-256 hashes in the DB — raw token lives only in the HttpOnly cookie.
+- Cloudinary uploads are signed server-side; `CLOUDINARY_API_SECRET` is never sent to the client.
+- Category slugs are validated against a reserved-slug list to prevent route collisions with app paths.
 
 ---
 
@@ -159,7 +153,4 @@ See `.env.example` for the full list. Copy to `.env.local` for local development
 1. **Reading comfort** — always the highest priority
 2. **Thai typography quality** — Noto Serif Thai (headings), Noto Sans Thai (body/UI)
 3. **Editorial elegance** — quiet luxury, not startup aesthetics
-4. **Simplicity** — minimal interface chrome; content is the hero
-5. **Performance** — Server Components by default, lazy loading throughout
-
-Dark mode: warm charcoal backgrounds, soft contrast — like reading a beautifully printed magazine at night.
+4. **Performance** — Server Components by default; card queries exclude large HTML columns

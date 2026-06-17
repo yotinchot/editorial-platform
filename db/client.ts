@@ -1,16 +1,17 @@
-import { neon } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-http";
+import postgres from "postgres";
+import { drizzle } from "drizzle-orm/postgres-js";
 
 import * as schema from "./schema";
 
 /**
  * Drizzle ORM client — the single database interface for the application.
  *
- * Uses the Neon serverless HTTP driver, which is optimised for Vercel's
- * serverless and edge runtimes (no persistent TCP connection required).
+ * Uses postgres.js (standard TCP/SSL) which works with any standard
+ * PostgreSQL endpoint including Prisma Data Platform (db.prisma.io),
+ * Neon, Supabase, and self-hosted Postgres.
  *
- * The POSTGRES_URL env var is the pooled connection string provided by
- * Vercel when you attach a Postgres database to the project.
+ * In serverless runtimes (Vercel), max: 1 prevents connection pool
+ * exhaustion — each function instance opens one connection.
  *
  * This file is server-only. Never import it from client components.
  */
@@ -22,6 +23,11 @@ if (!process.env.POSTGRES_URL) {
   );
 }
 
-const sql = neon(process.env.POSTGRES_URL);
+const client = postgres(process.env.POSTGRES_URL, {
+  // Keep max:1 for serverless — each invocation owns one connection.
+  // Increase only if running in a long-lived Node.js server.
+  max: 1,
+  ssl: "require",
+});
 
-export const db = drizzle(sql, { schema });
+export const db = drizzle(client, { schema });

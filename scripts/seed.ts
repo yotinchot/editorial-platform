@@ -10,9 +10,10 @@
  * - Safe to run multiple times — uses onConflictDoNothing()
  */
 
-import "dotenv/config";
-import { neon } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-http";
+import { config } from "dotenv";
+config({ path: ".env.local" });
+import postgres from "postgres";
+import { drizzle } from "drizzle-orm/postgres-js";
 
 import * as schema from "../db/schema";
 import {
@@ -28,8 +29,8 @@ if (!process.env.POSTGRES_URL) {
   process.exit(1);
 }
 
-const sql = neon(process.env.POSTGRES_URL);
-const db = drizzle(sql, { schema });
+const client = postgres(process.env.POSTGRES_URL, { max: 1, ssl: "require" });
+const db = drizzle(client, { schema });
 
 // ── Seed data ────────────────────────────────────────────────────────────────
 
@@ -38,16 +39,19 @@ const SEED_CATEGORIES: schema.NewCategory[] = [
     name: "Travel",
     slug: "travel",
     description: "Itineraries, slow travel, and notes from the road.",
+    display_order: 1,
   },
   {
     name: "Reading",
     slug: "reading",
     description: "Structured reflections on books worth sitting with.",
+    display_order: 2,
   },
   {
     name: "Essays",
     slug: "essays",
     description: "Personal essays on habits, attention, and craft.",
+    display_order: 3,
   },
 ];
 
@@ -75,7 +79,7 @@ const SEED_POSTS: schema.NewPost[] = [
     content_html:
       "<p>เกียวโตในเดือนพฤศจิกายนไม่ใช่เรื่องของการท่องเที่ยว แต่เป็นเรื่องของการอยู่</p>",
     status: "draft",
-    featured: true,
+    featured_order: 1,
     reading_time_minutes: 9,
     seo_title: "เกียวโตในฤดูใบไม้ร่วง — บันทึกการเดินทาง",
     seo_description:
@@ -104,7 +108,6 @@ const SEED_POSTS: schema.NewPost[] = [
     content_html:
       "<p>หนังสือที่ดีไม่ใช่หนังสือที่คุณเห็นด้วยทุกบรรทัด</p>",
     status: "draft",
-    featured: false,
     reading_time_minutes: 6,
     seo_title: "Atomic Habits — บันทึกการอ่านและความคิดเห็น",
     seo_description:

@@ -131,6 +131,7 @@
   }
   html {
     @apply font-sans;
+    scroll-behavior: smooth;
   }
   h1, h2, h3, h4 {
     @apply font-serif;
@@ -142,4 +143,402 @@
   .prose-editorial {
     max-width: 38rem;
   }
+}
+
+/* ── Public article prose ────────────────────────────────────────────────── */
+/*
+  Applied to the content div on public post pages. Includes Thai font
+  fallbacks (Noto Serif Thai / Noto Sans Thai) so Thai characters render
+  with appropriate letterforms and a comfortable line-height for reading.
+*/
+.article-prose {
+  font-size: 1.0625rem;
+  line-height: 1.875;
+  color: var(--foreground);
+  font-family: var(--font-sans), var(--font-sans-thai), sans-serif;
+}
+
+.article-prose h2 {
+  font-family: var(--font-serif), var(--font-serif-thai), serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-top: 3rem;
+  margin-bottom: 1rem;
+  color: var(--foreground);
+}
+
+.article-prose h3 {
+  font-family: var(--font-serif), var(--font-serif-thai), serif;
+  font-size: 1.2rem;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-top: 2.25rem;
+  margin-bottom: 0.6rem;
+  color: var(--foreground);
+}
+
+.article-prose p {
+  margin-bottom: 1.4rem;
+}
+
+.article-prose p:last-child {
+  margin-bottom: 0;
+}
+
+.article-prose ul,
+.article-prose ol {
+  padding-left: 1.5rem;
+  margin-bottom: 1.4rem;
+}
+
+.article-prose ul {
+  list-style-type: disc;
+}
+
+.article-prose ol {
+  list-style-type: decimal;
+}
+
+.article-prose li {
+  margin-bottom: 0.4rem;
+}
+
+.article-prose blockquote {
+  border-left: 3px solid var(--accent);
+  padding-left: 1.5rem;
+  margin-left: 0;
+  margin-bottom: 1.4rem;
+  font-style: italic;
+  color: var(--muted-foreground);
+}
+
+.article-prose hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 3rem 0;
+}
+
+.article-prose strong {
+  font-weight: 700;
+}
+
+.article-prose em {
+  font-style: italic;
+}
+
+.article-prose a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: opacity 150ms;
+}
+
+.article-prose a:hover {
+  opacity: 0.75;
+}
+
+.article-prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.25rem;
+  margin-bottom: 1.4rem;
+}
+
+/* ── Reading Block (public render) ───────────────────────────────────────── */
+
+.reading-block {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin: 2rem 0;
+  background: var(--muted);
+}
+
+.reading-block__cover {
+  margin: 0;
+}
+
+.reading-block__cover img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 2/3;
+  object-fit: cover;
+  border-radius: 0.25rem;
+  display: block;
+  margin: 0;
+}
+
+.reading-block__body {
+  min-width: 0;
+}
+
+.reading-block__title {
+  font-family: var(--font-serif), var(--font-serif-thai), serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0 0 0.25rem 0;
+  color: var(--foreground);
+}
+
+.reading-block__author {
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+  margin: 0 0 0.5rem 0;
+}
+
+.reading-block__rating {
+  font-size: 1rem;
+  color: #f59e0b;
+  margin: 0 0 0.5rem 0;
+  letter-spacing: 0.05em;
+}
+
+.reading-block__status {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0 0 0.5rem 0;
+}
+
+.reading-block__status--finished {
+  color: var(--accent);
+}
+
+.reading-block__status--reading {
+  color: oklch(0.55 0.1 220);
+}
+
+.reading-block__status--want-to-read {
+  color: var(--muted-foreground);
+}
+
+.reading-block__finished-date {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  margin: -0.25rem 0 0.5rem 0;
+}
+
+.reading-block__quote {
+  border-left: 2px solid var(--border);
+  padding-left: 1rem;
+  margin: 0.75rem 0;
+  font-style: italic;
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}
+
+.reading-block__takeaways {
+  list-style: disc;
+  padding-left: 1.25rem;
+  margin: 0.5rem 0;
+  font-size: 0.875rem;
+}
+
+.reading-block__takeaways li {
+  margin-bottom: 0.25rem;
+}
+
+.reading-block__who {
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+  margin: 0.5rem 0 0 0;
+}
+
+/* Prevent .article-prose h3/blockquote/ul rules from bleeding into reading-block internals */
+.article-prose .reading-block h3 {
+  margin-top: 0;
+  font-size: 1.1rem;
+}
+
+.article-prose .reading-block blockquote {
+  border-left: 2px solid var(--border);
+  padding-left: 1rem;
+  font-size: 0.875rem;
+}
+
+.article-prose .reading-block ul {
+  padding-left: 1.25rem;
+  margin-bottom: 0;
+}
+
+.article-prose .reading-block img {
+  margin-bottom: 0;
+}
+
+/* ── Travel Gallery (public render) ─────────────────────────────────────── */
+
+.travel-gallery {
+  display: grid;
+  gap: 0.375rem;
+  margin: 2rem 0;
+}
+
+.travel-gallery--single {
+  grid-template-columns: 1fr;
+}
+
+.travel-gallery--two-up {
+  grid-template-columns: 1fr 1fr;
+}
+
+.travel-gallery--three-up {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.travel-gallery--four-up {
+  grid-template-columns: 1fr 1fr;
+}
+
+.travel-gallery__item {
+  margin: 0;
+  overflow: hidden;
+  border-radius: 0.25rem;
+}
+
+.travel-gallery__item img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4/3;
+  object-fit: cover;
+  display: block;
+  margin: 0;
+  border-radius: 0.25rem;
+}
+
+.article-prose .travel-gallery__item img {
+  margin-bottom: 0;
+}
+
+.travel-gallery__item figcaption {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  text-align: center;
+  padding: 0.35rem 0.5rem;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+@media (max-width: 640px) {
+  .travel-gallery--three-up {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .reading-block {
+    grid-template-columns: 72px 1fr;
+    gap: 1rem;
+    padding: 1rem;
+  }
+}
+
+/* ── TipTap editor — placeholder ─────────────────────────────────────────── */
+/*
+  The Placeholder extension sets data-placeholder on the first empty paragraph
+  and adds .is-editor-empty to the root .tiptap element.
+  We use ::before to display it without touching the real content.
+*/
+.tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--muted-foreground);
+  pointer-events: none;
+  height: 0;
+}
+
+/* ── TipTap editor — prose typography ───────────────────────────────────── */
+/*
+  Applied via editorProps.attributes.class = "editor-prose" in tiptap-editor.tsx.
+  Matches the editorial design system: Noto Serif Thai headings, generous
+  line-height, warm foreground colours.
+*/
+.editor-prose {
+  min-height: 400px;
+  font-size: 1rem;
+  line-height: 1.85;
+  color: var(--foreground);
+}
+
+.editor-prose h2 {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-top: 2.5rem;
+  margin-bottom: 0.75rem;
+  color: var(--foreground);
+}
+
+.editor-prose h3 {
+  font-family: var(--font-serif);
+  font-size: 1.2rem;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-top: 2rem;
+  margin-bottom: 0.5rem;
+  color: var(--foreground);
+}
+
+.editor-prose p {
+  margin-bottom: 1.2rem;
+}
+
+.editor-prose p:last-child {
+  margin-bottom: 0;
+}
+
+.editor-prose ul,
+.editor-prose ol {
+  padding-left: 1.5rem;
+  margin-bottom: 1.2rem;
+}
+
+.editor-prose ul {
+  list-style-type: disc;
+}
+
+.editor-prose ol {
+  list-style-type: decimal;
+}
+
+.editor-prose li {
+  margin-bottom: 0.35rem;
+}
+
+.editor-prose blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1.25rem;
+  margin-left: 0;
+  margin-bottom: 1.2rem;
+  color: var(--muted-foreground);
+  font-style: italic;
+}
+
+.editor-prose hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 2.5rem 0;
+}
+
+.editor-prose strong {
+  font-weight: 700;
+}
+
+.editor-prose em {
+  font-style: italic;
+}
+
+.editor-prose a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: opacity 150ms;
+}
+
+.editor-prose a:hover {
+  opacity: 0.75;
 }
