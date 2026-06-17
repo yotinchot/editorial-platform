@@ -1,19 +1,9 @@
-import { cn } from "@/lib/utils";
-
 /**
- * Stand-in for a real cover image. Phase 1 has no Cloudinary wiring yet, so
- * this renders a quiet textured panel instead of a broken <img>. Swap for
- * `next/image` once `coverImageUrl` exists on the post record.
+ * Re-export from the canonical shared location.
+ * The visual component lives in `components/shared/image-placeholder.tsx`
+ * so that shared components don't depend on feature internals.
+ *
+ * Import `ImagePlaceholder` directly in new code; this file exists only
+ * to avoid breaking any imports that already use this path.
  */
-export function PostCoverPlaceholder({ className }: { className?: string }) {
-  return (
-    <div
-      className={cn(
-        "relative overflow-hidden rounded-lg bg-muted",
-        className,
-      )}
-    >
-      <div className="absolute inset-0 bg-gradient-to-br from-foreground/[0.04] via-transparent to-foreground/[0.08]" />
-    </div>
-  );
-}
+export { ImagePlaceholder as PostCoverPlaceholder } from "@/components/shared/image-placeholder";

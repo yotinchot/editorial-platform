@@ -1,11 +1,11 @@
 import Link from "next/link";
 
-import { PostCoverPlaceholder } from "@/features/posts/components/post-cover-placeholder";
+import { ImagePlaceholder } from "@/components/shared/image-placeholder";
 
 export function AboutPreview() {
   return (
     <div className="grid items-center gap-10 sm:grid-cols-[200px_1fr]">
-      <PostCoverPlaceholder className="aspect-square" />
+      <ImagePlaceholder className="aspect-square" />
       <div>
         <p className="text-xs tracking-wide text-muted-foreground uppercase">
           About
