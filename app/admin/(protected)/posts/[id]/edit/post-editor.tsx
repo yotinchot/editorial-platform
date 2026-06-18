@@ -125,7 +125,7 @@ export function PostEditor({ post, allCategories }: PostEditorProps) {
         setAutosaveStatus({ type: "saving" });
         try {
           const result = await autosavePostDraft(post.id, {
-            draft_content_json: json,
+            draft_content_json: JSON.parse(JSON.stringify(json)) as JSONContent,
           });
 
           // Abort if a manual save completed while this request was in-flight.
@@ -157,6 +157,17 @@ export function PostEditor({ post, allCategories }: PostEditorProps) {
 
     setSaveError(null);
     startTransition(async () => {
+      // ProseMirror attrs use Object.create(null) (null-prototype objects).
+      // React's encodeReply treats these as exotic and serialises them as
+      // "$T" temporary client references. On the server they become RSC
+      // proxies whose ownKeys trap returns [] — JSON.stringify silently
+      // converts them to {}, losing all image attributes. Normalising
+      // here (on the client, before encodeReply runs) converts every
+      // null-prototype object to a plain {} so all attrs survive the
+      // flight protocol intact.
+      const contentToSave = editorContentRef.current
+        ? (JSON.parse(JSON.stringify(editorContentRef.current)) as JSONContent)
+        : null;
       const result = await updatePost(post.id, {
         title,
         slug,
@@ -164,7 +175,7 @@ export function PostEditor({ post, allCategories }: PostEditorProps) {
         type,
         status,
         category_ids: selectedCategoryIds,
-        content_json: editorContentRef.current,
+        content_json: contentToSave,
         cover_image: coverImage,
       });
       if ("error" in result) {

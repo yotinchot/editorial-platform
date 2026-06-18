@@ -114,10 +114,14 @@ export async function autosavePostDraft(
 
   const now = new Date();
 
+  const normalizedDraft = parsed.data.draft_content_json
+    ? JSON.parse(JSON.stringify(parsed.data.draft_content_json))
+    : null;
+
   await db
     .update(posts)
     .set({
-      draft_content_json: parsed.data.draft_content_json,
+      draft_content_json: normalizedDraft,
       draft_saved_at: now,
       updated_at: now,
     })
@@ -173,15 +177,16 @@ export async function updatePost(
 
   // Generate HTML from TipTap JSON (server-side, no DOM).
   // Abort the save on failure rather than storing empty HTML.
+  //
+  // Server-side safeguard: if any null-prototype attrs slipped through
+  // (e.g. via a code path that bypassed client normalisation), the
+  // JSON round-trip here converts them to plain objects before both
+  // HTML generation and the DB write.
   let content_html: string | null = null;
+  let normalizedJson: unknown = null;
   if (content_json) {
     try {
-      // ProseMirror's Node.toJSON() returns attrs as Object.create(null) (null-prototype
-      // objects). React's encodeReply treats these as exotic values and wraps them in
-      // temporary client reference proxies. Accessing any property on those proxies
-      // server-side throws "Cannot access X on the server". Round-tripping through
-      // JSON converts all null-prototype objects to plain {} objects.
-      const normalizedJson = JSON.parse(JSON.stringify(content_json));
+      normalizedJson = JSON.parse(JSON.stringify(content_json));
       content_html = generatePostHTML(normalizedJson);
     } catch (err) {
       const detail = err instanceof Error ? err.message : String(err);
@@ -226,12 +231,12 @@ export async function updatePost(
           excerpt: excerpt || null,
           type,
           status,
-          content_json: content_json ?? null,
+          content_json: normalizedJson ?? null,
           content_html,
           cover_image: cover_image ?? null,
           reading_time_minutes,
           // Mirror latest content into draft columns so the editor reloads correctly.
-          draft_content_json: content_json ?? null,
+          draft_content_json: normalizedJson ?? null,
           draft_saved_at: now,
           updated_at: now,
           ...(isBecomingPublished ? { published_at: now } : {}),
