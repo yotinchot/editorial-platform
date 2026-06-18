@@ -159,8 +159,8 @@
 .article-prose h2 {
   font-family: var(--font-serif), var(--font-serif-thai), serif;
   font-size: 1.75rem;
-  font-weight: 600;
-  font-style: italic;
+  font-weight: 700;
+  font-style: normal;
   line-height: 1.25;
   margin-top: 3.5rem;
   margin-bottom: 1.1rem;
@@ -171,8 +171,8 @@
 .article-prose h3 {
   font-family: var(--font-serif), var(--font-serif-thai), serif;
   font-size: 1.35rem;
-  font-weight: 500;
-  font-style: italic;
+  font-weight: 600;
+  font-style: normal;
   line-height: 1.35;
   margin-top: 2.5rem;
   margin-bottom: 0.7rem;
@@ -400,6 +400,10 @@
   display: grid;
   gap: 0.5rem;
   margin: 2.75rem 0;
+  /* Desktop breakout: bleed 4rem past the prose column on each side */
+  --gallery-bleed: 0px;
+  width: calc(100% + 2 * var(--gallery-bleed));
+  margin-left: calc(-1 * var(--gallery-bleed));
 }
 
 .travel-gallery--single {
@@ -449,13 +453,20 @@
 }
 
 .travel-gallery__item figcaption {
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   color: var(--muted-foreground);
   text-align: center;
-  padding: 0.5rem 0.75rem;
+  padding: 0.5rem 0.5rem 0.25rem;
   font-style: italic;
-  line-height: 1.4;
+  line-height: 1.5;
   font-family: var(--font-sans-thai), var(--font-sans), sans-serif;
+  letter-spacing: 0.01em;
+}
+
+@media (min-width: 768px) {
+  .travel-gallery {
+    --gallery-bleed: 4rem;
+  }
 }
 
 @media (max-width: 640px) {
@@ -467,6 +478,14 @@
     grid-template-columns: 72px 1fr;
     gap: 1rem;
     padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .travel-gallery--two-up,
+  .travel-gallery--three-up,
+  .travel-gallery--four-up {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -499,8 +518,8 @@
 .editor-prose h2 {
   font-family: var(--font-serif), var(--font-serif-thai), serif;
   font-size: 1.75rem;
-  font-weight: 600;
-  font-style: italic;
+  font-weight: 700;
+  font-style: normal;
   line-height: 1.25;
   margin-top: 3rem;
   margin-bottom: 1rem;
@@ -511,8 +530,8 @@
 .editor-prose h3 {
   font-family: var(--font-serif), var(--font-serif-thai), serif;
   font-size: 1.35rem;
-  font-weight: 500;
-  font-style: italic;
+  font-weight: 600;
+  font-style: normal;
   line-height: 1.35;
   margin-top: 2.25rem;
   margin-bottom: 0.6rem;

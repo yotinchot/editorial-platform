@@ -100,7 +100,7 @@ export default async function PostPage({
 
       {/* Article header */}
       <Container className="pt-12 pb-8 sm:pt-16 sm:pb-10">
-        <div className="max-w-2xl">
+        <div className="max-w-2xl mx-auto">
           {/* Breadcrumb */}
           <nav className="mb-5 flex items-center gap-1.5 text-xs tracking-wide text-muted-foreground uppercase">
             <Link href="/" className="hover:text-foreground transition-colors">
@@ -150,12 +150,12 @@ export default async function PostPage({
         <div
           className={
             hasToc
-              ? "grid gap-16 lg:grid-cols-[1fr_220px]"
-              : "max-w-2xl"
+              ? "grid gap-16 lg:grid-cols-[1fr_220px] mx-auto"
+              : "max-w-2xl mx-auto"
           }
         >
           {/* Content — max-w-2xl keeps reading measure consistent with the non-TOC path */}
-          <div className="min-w-0 max-w-2xl">
+          <div className="min-w-0 max-w-2xl mx-auto">
             {post.contentHtml ? (
               <ArticleContent html={post.contentHtml} />
             ) : (
