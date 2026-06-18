@@ -40,14 +40,6 @@ export interface TravelGalleryBlockAttrs {
   images: GalleryImage[];
 }
 
-/** Maximum number of images for each layout. */
-export const LAYOUT_MAX: Record<GalleryLayout, number> = {
-  single: 1,
-  "two-up": 2,
-  "three-up": 3,
-  "four-up": 4,
-};
-
 // ── Node ────────────────────────────────────────────────────────────────────
 
 export const TravelGalleryBlock = Node.create({

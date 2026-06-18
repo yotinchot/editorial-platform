@@ -10,7 +10,7 @@ import type {
   GalleryLayout,
   TravelGalleryBlockAttrs,
 } from "@/lib/tiptap-nodes/travel-gallery-block";
-import { LAYOUT_MAX } from "@/lib/tiptap-nodes/travel-gallery-block";
+import { LAYOUT_MAX } from "@/lib/tiptap-nodes/travel-gallery-constants";
 import { uploadEditorialImage, validateImageFile } from "@/lib/upload-image";
 
 // ── Helpers ─────────────────────────────────────────────────────────────────

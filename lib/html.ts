@@ -11,7 +11,7 @@
 import { generateHTML } from "@tiptap/html/server";
 import { StarterKit } from "@tiptap/starter-kit";
 import { Link } from "@tiptap/extension-link";
-import type { JSONContent } from "@tiptap/react";
+import type { JSONContent } from "@tiptap/core";
 
 import { ImageNode } from "./editor-image-node";
 import { ReadingBlock } from "./tiptap-nodes/reading-block";
