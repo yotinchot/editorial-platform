@@ -8,7 +8,7 @@
  * The extensions list must match the client-side editor so every node/mark
  * type in the stored JSON has a corresponding renderHTML definition.
  */
-import { generateHTML } from "@tiptap/html";
+import { generateHTML } from "@tiptap/html/server";
 import { StarterKit } from "@tiptap/starter-kit";
 import { Link } from "@tiptap/extension-link";
 import type { JSONContent } from "@tiptap/react";
