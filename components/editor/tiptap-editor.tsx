@@ -1,17 +1,17 @@
 "use client";
 
 import { useEffect } from "react";
-import { EditorContent, ReactNodeViewRenderer, useEditor } from "@tiptap/react";
+import { EditorContent, useEditor } from "@tiptap/react";
 import { Placeholder } from "@tiptap/extension-placeholder";
 import { StarterKit } from "@tiptap/starter-kit";
 import { Link } from "@tiptap/extension-link";
 import type { JSONContent } from "@tiptap/react";
 
-import { ImageNode } from "@/lib/editor-image-node";
-import { ReadingBlock } from "@/lib/tiptap-nodes/reading-block";
-import { TravelGalleryBlock } from "@/lib/tiptap-nodes/travel-gallery-block";
-import { ReadingBlockView } from "@/components/editor/blocks/reading-block-view";
-import { TravelGalleryBlockView } from "@/components/editor/blocks/travel-gallery-block-view";
+import {
+  ImageNode,
+  ReadingBlock,
+  TravelGalleryBlock,
+} from "@/lib/tiptap-nodes/client-extensions";
 import type { EditorialImage } from "@/types/image";
 
 import { EditorToolbar } from "./editor-toolbar";
@@ -62,20 +62,11 @@ export default function TipTapEditor({
             "underline underline-offset-2 text-accent hover:opacity-80 transition-opacity",
         },
       }),
+      // ImageNode, ReadingBlock, TravelGalleryBlock come from client-extensions.ts
+      // which defines them inline — no shared module with lib/html.ts (server).
       ImageNode,
-      // Phase 6: editorial blocks — base node extended with React NodeView.
-      // The base node (server-safe) lives in lib/tiptap-nodes/*.ts.
-      // The NodeView is only attached here (client-only).
-      ReadingBlock.extend({
-        addNodeView() {
-          return ReactNodeViewRenderer(ReadingBlockView);
-        },
-      }),
-      TravelGalleryBlock.extend({
-        addNodeView() {
-          return ReactNodeViewRenderer(TravelGalleryBlockView);
-        },
-      }),
+      ReadingBlock,
+      TravelGalleryBlock,
       Placeholder.configure({
         placeholder: "Start writing your story…",
       }),
