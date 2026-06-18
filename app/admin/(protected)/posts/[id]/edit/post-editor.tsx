@@ -11,13 +11,14 @@ import {
   type AutosaveStatus,
 } from "@/components/editor/autosave-indicator";
 import { CoverImage } from "@/components/editor/cover-image";
+import { TagInput } from "@/components/editor/tag-input";
 import { Button } from "@/components/ui/button";
 import type { Category, Post, PostCategory } from "@/db/schema";
+import type { Tag, PostTag } from "@/db/schema";
 import { titleToSlug } from "@/lib/slug-utils";
 import { uploadEditorialImage, validateImageFile } from "@/lib/upload-image";
 import type { EditorialImage } from "@/types/image";
 
-// Load editor client-side only — TipTap requires a DOM.
 const TipTapEditor = dynamic(
   () => import("@/components/editor/tiptap-editor"),
   { ssr: false },
@@ -25,101 +26,76 @@ const TipTapEditor = dynamic(
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
-export interface PostWithCategories extends Post {
+export interface PostWithRelations extends Post {
   postCategories: Array<PostCategory & { category: Category }>;
+  postTags: Array<PostTag & { tag: Tag }>;
 }
 
 interface PostEditorProps {
-  post: PostWithCategories;
+  post: PostWithRelations;
   allCategories: Category[];
 }
 
 // ── Component ──────────────────────────────────────────────────────────────
 
 export function PostEditor({ post, allCategories }: PostEditorProps) {
-  // ── Editable field state ────────────────────────────────────────────────
   const [title, setTitle] = useState(post.title);
   const [slug, setSlug] = useState(post.slug);
   const [excerpt, setExcerpt] = useState(post.excerpt ?? "");
-  const [type, setType] = useState<"travel" | "reading" | "essay">(post.type);
   const [status, setStatus] = useState<"draft" | "published">(
     post.status === "scheduled" ? "draft" : post.status,
   );
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>(
     post.postCategories.map((pc) => pc.category_id),
   );
+  const [tagNames, setTagNames] = useState<string[]>(
+    post.postTags.map((pt) => pt.tag.name),
+  );
 
-  // ── Cover image state ──────────────────────────────────────────────────
-  // Initialised from the post's stored cover_image (may be null).
-  // Updated by the CoverImage sidebar component; persisted on manual save only.
   const [coverImage, setCoverImage] = useState<EditorialImage | null>(
     (post.cover_image as EditorialImage | null) ?? null,
   );
 
-  // ── Initial editor content: draft takes priority over published ─────────
-  // Declared before editorContentRef so it can seed the initial ref value.
   const initialContent = (post.draft_content_json ??
     post.content_json ??
     null) as JSONContent | null;
 
-  // ── Editor content ref ──────────────────────────────────────────────────
-  // Kept in a ref (not state) so the autosave timer always reads the latest
-  // value without causing re-renders on every keystroke.
-  //
-  // CRIT-1 fix: seed from initialContent so that clicking Save without ever
-  // typing in the editor sends the existing content — not null — to the DB.
   const editorContentRef = useRef<JSONContent | null>(initialContent);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // ── Save state ──────────────────────────────────────────────────────────
   const [autosaveStatus, setAutosaveStatus] = useState<AutosaveStatus>({
     type: "idle",
   });
   const [isPending, startTransition] = useTransition();
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  // ── Inline image upload handler ─────────────────────────────────────────
-  // Passed down to TipTapEditor → EditorToolbar so the toolbar can trigger
-  // a signed Cloudinary upload without needing direct server-action access.
   const handleInlineImageUpload = useCallback(
     async (file: File): Promise<EditorialImage> => {
       const validationError = validateImageFile(file);
       if (validationError) throw new Error(validationError);
-      // alt text is prompted in the toolbar; pass "" here and let the toolbar
-      // supply the user-entered alt after upload.
       return uploadEditorialImage(file, "");
     },
     [],
   );
 
-  // ── Save version counter (CRIT-2) ───────────────────────────────────────
-  // Incremented on every manual save. Autosave closures capture the version
-  // at creation time and silently discard their result if the version has
-  // advanced (i.e. a manual save completed while they were in-flight).
   const saveVersionRef = useRef(0);
 
-  // ── Cleanup: cancel pending autosave timer on unmount ──────────────────
   useEffect(() => {
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
   }, []);
 
-  // ── Autosave ────────────────────────────────────────────────────────────
   const handleEditorChange = useCallback(
     (json: JSONContent) => {
       editorContentRef.current = json;
       setAutosaveStatus({ type: "unsaved" });
 
-      // Reset the 3-second debounce timer on every change.
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
 
-      // Capture the current save version so this closure can detect whether
-      // a manual save has happened before or during the network request.
       const capturedVersion = saveVersionRef.current;
 
       autosaveTimerRef.current = setTimeout(async () => {
-        // Abort if a manual save occurred after this timer was created.
         if (saveVersionRef.current !== capturedVersion) return;
 
         setAutosaveStatus({ type: "saving" });
@@ -128,7 +104,6 @@ export function PostEditor({ post, allCategories }: PostEditorProps) {
             draft_content_json: JSON.parse(JSON.stringify(json)) as JSONContent,
           });
 
-          // Abort if a manual save completed while this request was in-flight.
           if (saveVersionRef.current !== capturedVersion) return;
 
           if ("error" in result) {
@@ -145,10 +120,7 @@ export function PostEditor({ post, allCategories }: PostEditorProps) {
     [post.id],
   );
 
-  // ── Manual save ─────────────────────────────────────────────────────────
   const handleManualSave = useCallback(() => {
-    // CRIT-2 fix: cancel any pending autosave timer and invalidate any
-    // in-flight autosave request before starting the manual save.
     if (autosaveTimerRef.current) {
       clearTimeout(autosaveTimerRef.current);
       autosaveTimerRef.current = null;
@@ -157,14 +129,6 @@ export function PostEditor({ post, allCategories }: PostEditorProps) {
 
     setSaveError(null);
     startTransition(async () => {
-      // ProseMirror attrs use Object.create(null) (null-prototype objects).
-      // React's encodeReply treats these as exotic and serialises them as
-      // "$T" temporary client references. On the server they become RSC
-      // proxies whose ownKeys trap returns [] — JSON.stringify silently
-      // converts them to {}, losing all image attributes. Normalising
-      // here (on the client, before encodeReply runs) converts every
-      // null-prototype object to a plain {} so all attrs survive the
-      // flight protocol intact.
       const contentToSave = editorContentRef.current
         ? (JSON.parse(JSON.stringify(editorContentRef.current)) as JSONContent)
         : null;
@@ -172,9 +136,9 @@ export function PostEditor({ post, allCategories }: PostEditorProps) {
         title,
         slug,
         excerpt,
-        type,
         status,
         category_ids: selectedCategoryIds,
+        tag_names: tagNames,
         content_json: contentToSave,
         cover_image: coverImage,
       });
@@ -184,9 +148,8 @@ export function PostEditor({ post, allCategories }: PostEditorProps) {
         setAutosaveStatus({ type: "saved", at: new Date() });
       }
     });
-  }, [post.id, title, slug, excerpt, type, status, selectedCategoryIds, coverImage]);
+  }, [post.id, title, slug, excerpt, status, selectedCategoryIds, tagNames, coverImage]);
 
-  // ── Delete ──────────────────────────────────────────────────────────────
   const handleDelete = useCallback(() => {
     if (!confirm("Delete this post? This cannot be undone.")) return;
     startTransition(async () => {
@@ -195,28 +158,24 @@ export function PostEditor({ post, allCategories }: PostEditorProps) {
     });
   }, [post.id]);
 
-  // ── Category toggle ─────────────────────────────────────────────────────
   const toggleCategory = (id: string) => {
     setSelectedCategoryIds((prev) =>
       prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id],
     );
   };
 
-  // ── Auto-update slug from title (only when slug is unchanged from default) ──
   const originalSlug = useRef(post.slug);
   const slugWasEdited = useRef(false);
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTitle(e.target.value);
-    // Auto-update slug only if user hasn't manually touched it.
     if (!slugWasEdited.current) {
       setSlug(titleToSlug(e.target.value) || originalSlug.current);
     }
   };
 
-  // ── Render ──────────────────────────────────────────────────────────────
   return (
     <div>
-      {/* ── Top bar ──────────────────────────────────────────────────── */}
+      {/* Top bar */}
       <div className="mb-8 flex items-center justify-between">
         <Link
           href="/admin/posts"
@@ -229,19 +188,15 @@ export function PostEditor({ post, allCategories }: PostEditorProps) {
           {saveError && (
             <span className="text-xs text-destructive">{saveError}</span>
           )}
-          <Button
-            onClick={handleManualSave}
-            disabled={isPending}
-            size="sm"
-          >
+          <Button onClick={handleManualSave} disabled={isPending} size="sm">
             {isPending ? "Saving…" : "Save"}
           </Button>
         </div>
       </div>
 
-      {/* ── Two-column layout ─────────────────────────────────────────── */}
+      {/* Two-column layout */}
       <div className="flex gap-10 items-start">
-        {/* ── Editor column ─────────────────────────────────────────── */}
+        {/* Editor column */}
         <div className="min-w-0 flex-1 space-y-5">
           {/* Title */}
           <input
@@ -266,7 +221,7 @@ export function PostEditor({ post, allCategories }: PostEditorProps) {
             />
           </div>
 
-          {/* TipTap editor — SSR-safe via dynamic import */}
+          {/* Editor */}
           <TipTapEditor
             initialContent={initialContent}
             onChange={handleEditorChange}
@@ -288,26 +243,10 @@ export function PostEditor({ post, allCategories }: PostEditorProps) {
           </div>
         </div>
 
-        {/* ── Sidebar ──────────────────────────────────────────────── */}
+        {/* Sidebar */}
         <aside className="w-52 shrink-0 space-y-6 pt-1">
           {/* Cover image */}
           <CoverImage value={coverImage} onChange={setCoverImage} />
-
-          {/* Type */}
-          <div className="space-y-1.5">
-            <p className="text-xs font-medium uppercase tracking-wide text-foreground/40">
-              Type
-            </p>
-            <select
-              value={type}
-              onChange={(e) => setType(e.target.value as typeof type)}
-              className="w-full rounded-sm border border-border bg-background px-2.5 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="essay">Essay</option>
-              <option value="travel">Travel</option>
-              <option value="reading">Reading</option>
-            </select>
-          </div>
 
           {/* Status */}
           <div className="space-y-1.5">
@@ -348,6 +287,17 @@ export function PostEditor({ post, allCategories }: PostEditorProps) {
               </div>
             </div>
           )}
+
+          {/* Tags */}
+          <div className="space-y-1.5">
+            <p className="text-xs font-medium uppercase tracking-wide text-foreground/40">
+              Tags
+            </p>
+            <TagInput value={tagNames} onChange={setTagNames} />
+            <p className="text-[0.6rem] text-foreground/30">
+              Enter or comma to add
+            </p>
+          </div>
 
           {/* Danger zone */}
           <div className="border-t border-border pt-5">

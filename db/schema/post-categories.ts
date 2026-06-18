@@ -3,6 +3,7 @@ import { relations } from "drizzle-orm";
 
 import { posts } from "./posts";
 import { categories } from "./categories";
+import { postTags } from "./post-tags";
 
 /**
  * Many-to-many join table: posts ↔ categories.
@@ -30,6 +31,7 @@ export const postCategories = pgTable(
 
 export const postsRelations = relations(posts, ({ many }) => ({
   postCategories: many(postCategories),
+  postTags: many(postTags),
 }));
 
 export const categoriesRelations = relations(categories, ({ many }) => ({

@@ -1,8 +1,8 @@
 import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 
 import { db } from "@/db";
-import { categories, postCategories, posts } from "@/db/schema";
-import type { PostSummary } from "@/features/posts/types/post";
+import { categories, postCategories, postTags, posts, tags } from "@/db/schema";
+import type { PostSummary, TagSummary } from "@/features/posts/types/post";
 import type { CoverImage } from "@/db/schema/posts";
 
 const SEARCH_COLUMNS = {
@@ -16,9 +16,12 @@ const SEARCH_COLUMNS = {
   status: true,
 } as const;
 
-const WITH_CATEGORIES = {
+const WITH_CATEGORIES_AND_TAGS = {
   postCategories: {
     with: { category: true },
+  },
+  postTags: {
+    with: { tag: true },
   },
 } as const;
 
@@ -32,18 +35,22 @@ type RawSearchRow = {
   cover_image: CoverImage | null | undefined;
   status: string;
   postCategories: Array<{ category: { name: string; slug: string } }>;
+  postTags: Array<{ tag: { name: string; slug: string } }>;
 };
 
 function shapeResult(row: RawSearchRow): PostSummary {
   const primaryCat = row.postCategories[0]?.category;
   const cover = row.cover_image ?? null;
+  const rowTags: TagSummary[] = (row.postTags ?? []).map((pt) => ({
+    name: pt.tag.name,
+    slug: pt.tag.slug,
+  }));
   return {
     slug: row.slug,
     title: row.title,
     excerpt: row.excerpt,
     category: primaryCat?.name ?? "Uncategorized",
     categorySlug: primaryCat?.slug ?? "uncategorized",
-    type: row.type,
     publishedAt: row.published_at?.toISOString() ?? new Date().toISOString(),
     readingTimeMinutes: row.reading_time_minutes,
     coverImage: cover
@@ -56,27 +63,15 @@ function shapeResult(row: RawSearchRow): PostSummary {
           focalY: cover.focalY ?? 0.5,
         }
       : null,
+    tags: rowTags,
   };
 }
 
 /**
  * Full-text search over published posts.
  *
- * Matches against:
- *   • title        — primary match
- *   • excerpt      — secondary match
- *   • category name — via correlated EXISTS subquery
- *
- * Uses PostgreSQL ILIKE (case-insensitive LIKE) rather than tsvector/tsquery.
- * Rationale: Thai text has no word-boundary delimiters, so standard Postgres
- * full-text search (which tokenises on spaces) produces poor recall for Thai
- * queries. ILIKE substring matching works correctly for both Thai and English.
- *
- * content_html is intentionally excluded — it contains raw HTML tags that
- * would produce noisy false-positive matches (e.g. searching "div").
- *
- * Returns at most 30 results, sorted newest-first.
- * Returns [] for empty / whitespace-only queries.
+ * Matches against title, excerpt, category name, and tag name.
+ * Uses ILIKE for Thai/English compatibility.
  */
 export async function searchPosts(rawQuery: string): Promise<PostSummary[]> {
   const q = rawQuery.trim();
@@ -90,7 +85,6 @@ export async function searchPosts(rawQuery: string): Promise<PostSummary[]> {
       or(
         ilike(posts.title, likePattern),
         ilike(posts.excerpt, likePattern),
-        // Correlated subquery: post has at least one category whose name matches
         sql`EXISTS (
           SELECT 1
           FROM ${postCategories} _pc
@@ -98,12 +92,19 @@ export async function searchPosts(rawQuery: string): Promise<PostSummary[]> {
           WHERE _pc.post_id = ${posts.id}
           AND _c.name ILIKE ${likePattern}
         )`,
+        sql`EXISTS (
+          SELECT 1
+          FROM ${postTags} _pt
+          JOIN ${tags} _t ON _t.id = _pt.tag_id
+          WHERE _pt.post_id = ${posts.id}
+          AND _t.name ILIKE ${likePattern}
+        )`,
       ),
     ),
     orderBy: [desc(posts.published_at)],
     limit: 30,
     columns: SEARCH_COLUMNS,
-    with: WITH_CATEGORIES,
+    with: WITH_CATEGORIES_AND_TAGS,
   });
 
   return rows.map((r) => shapeResult(r as unknown as RawSearchRow));

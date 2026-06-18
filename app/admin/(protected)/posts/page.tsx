@@ -74,7 +74,6 @@ export default async function PostsPage() {
                     )}
                   </p>
                   <div className="mt-1 flex items-center gap-3 text-xs text-foreground/40">
-                    <span className="capitalize">{post.type}</span>
                     {cats && <span>{cats}</span>}
                     <span>{formatPostDate(post.updated_at.toISOString())}</span>
                   </div>

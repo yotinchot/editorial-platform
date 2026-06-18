@@ -17,6 +17,7 @@ export const PLACEHOLDER_POSTS: PostSummary[] = [
     type: "travel",
     publishedAt: "2026-05-12",
     readingTimeMinutes: 9,
+    tags: [],
   },
   {
     slug: "atomic-habits-notes",
@@ -28,6 +29,7 @@ export const PLACEHOLDER_POSTS: PostSummary[] = [
     type: "reading",
     publishedAt: "2026-04-28",
     readingTimeMinutes: 6,
+    tags: [],
   },
   {
     slug: "building-consistency",
@@ -38,6 +40,7 @@ export const PLACEHOLDER_POSTS: PostSummary[] = [
     type: "essay",
     publishedAt: "2026-04-10",
     readingTimeMinutes: 7,
+    tags: [],
   },
   {
     slug: "lisbon-in-march",
@@ -48,6 +51,7 @@ export const PLACEHOLDER_POSTS: PostSummary[] = [
     type: "travel",
     publishedAt: "2026-03-22",
     readingTimeMinutes: 8,
+    tags: [],
   },
   {
     slug: "four-thousand-weeks-notes",
@@ -58,6 +62,7 @@ export const PLACEHOLDER_POSTS: PostSummary[] = [
     type: "reading",
     publishedAt: "2026-03-02",
     readingTimeMinutes: 5,
+    tags: [],
   },
   {
     slug: "the-discipline-of-fewer-projects",
@@ -68,6 +73,7 @@ export const PLACEHOLDER_POSTS: PostSummary[] = [
     type: "essay",
     publishedAt: "2026-02-18",
     readingTimeMinutes: 4,
+    tags: [],
   },
 ];
 

@@ -66,6 +66,12 @@ export default async function AdminLayout({
               >
                 Posts
               </Link>
+              <Link
+                href="/admin/categories"
+                className="text-sm text-foreground/50 transition-colors hover:text-foreground"
+              >
+                Categories
+              </Link>
             </nav>
           </div>
           <form action={logoutAction}>

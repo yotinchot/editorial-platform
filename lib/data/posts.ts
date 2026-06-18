@@ -2,14 +2,11 @@ import { cache } from "react";
 import { and, asc, desc, eq, isNotNull } from "drizzle-orm";
 
 import { db } from "@/db";
-import { categories, postCategories, posts } from "@/db/schema";
+import { categories, postCategories, posts, postTags, tags } from "@/db/schema";
 import type { CoverImage } from "@/db/schema/posts";
-import type { PostDetail, PostSummary } from "@/features/posts/types/post";
+import type { PostDetail, PostSummary, TagSummary } from "@/features/posts/types/post";
 
 // ── Column restrictions ──────────────────────────────────────────────────────
-// Card queries exclude content_html / content_json / draft_* columns.
-// This avoids pulling potentially large HTML blobs for pages that only
-// render post cards (homepage, category listings).
 
 const CARD_COLUMNS = {
   slug: true,
@@ -19,10 +16,9 @@ const CARD_COLUMNS = {
   published_at: true,
   reading_time_minutes: true,
   cover_image: true,
-  status: true, // needed for in-memory filter in getPostsByCategory
+  status: true,
 } as const;
 
-// Detail query additionally needs the rendered HTML and last-modified timestamp.
 const DETAIL_COLUMNS = {
   ...CARD_COLUMNS,
   content_html: true,
@@ -43,6 +39,9 @@ type RawRow = {
   postCategories: Array<{
     category: { name: string; slug: string };
   }>;
+  postTags: Array<{
+    tag: { name: string; slug: string };
+  }>;
 };
 
 type RawDetailRow = RawRow & {
@@ -53,13 +52,16 @@ type RawDetailRow = RawRow & {
 function shapeForCard(row: RawRow): PostSummary {
   const primaryCat = row.postCategories[0]?.category;
   const cover = row.cover_image ?? null;
+  const tags: TagSummary[] = (row.postTags ?? []).map((pt) => ({
+    name: pt.tag.name,
+    slug: pt.tag.slug,
+  }));
   return {
     slug: row.slug,
     title: row.title,
     excerpt: row.excerpt,
     category: primaryCat?.name ?? "Uncategorized",
     categorySlug: primaryCat?.slug ?? "uncategorized",
-    type: row.type,
     publishedAt: row.published_at?.toISOString() ?? new Date().toISOString(),
     readingTimeMinutes: row.reading_time_minutes,
     coverImage: cover
@@ -73,56 +75,42 @@ function shapeForCard(row: RawRow): PostSummary {
           fitMode: cover.fitMode,
         }
       : null,
+    tags,
   };
 }
 
-const WITH_CATEGORIES = {
+const WITH_CATEGORIES_AND_TAGS = {
   postCategories: {
     with: { category: true },
+  },
+  postTags: {
+    with: { tag: true },
   },
 } as const;
 
 // ── Public queries ───────────────────────────────────────────────────────────
 
-/** Returns the featured post (lowest featured_order). Null if none exist. */
 export async function getFeaturedPost(): Promise<PostSummary | null> {
   const row = await db.query.posts.findFirst({
     where: and(eq(posts.status, "published"), isNotNull(posts.featured_order)),
     orderBy: [asc(posts.featured_order)],
     columns: CARD_COLUMNS,
-    with: WITH_CATEGORIES,
+    with: WITH_CATEGORIES_AND_TAGS,
   });
   return row ? shapeForCard(row as unknown as RawRow) : null;
 }
 
-/** Returns most-recent published posts, newest first. */
 export async function getLatestPosts(limit = 6): Promise<PostSummary[]> {
   const rows = await db.query.posts.findMany({
     where: eq(posts.status, "published"),
     orderBy: [desc(posts.published_at)],
     limit,
     columns: CARD_COLUMNS,
-    with: WITH_CATEGORIES,
+    with: WITH_CATEGORIES_AND_TAGS,
   });
   return rows.map((r) => shapeForCard(r as unknown as RawRow));
 }
 
-/** Returns published posts filtered by type, newest first. */
-export async function getPostsByType(
-  type: "travel" | "reading" | "essay",
-  limit = 6,
-): Promise<PostSummary[]> {
-  const rows = await db.query.posts.findMany({
-    where: and(eq(posts.status, "published"), eq(posts.type, type)),
-    orderBy: [desc(posts.published_at)],
-    limit,
-    columns: CARD_COLUMNS,
-    with: WITH_CATEGORIES,
-  });
-  return rows.map((r) => shapeForCard(r as unknown as RawRow));
-}
-
-/** Returns published posts belonging to a category slug, newest first. */
 export async function getPostsByCategory(
   categorySlug: string,
   limit = 30,
@@ -138,7 +126,7 @@ export async function getPostsByCategory(
     with: {
       post: {
         columns: CARD_COLUMNS,
-        with: WITH_CATEGORIES,
+        with: WITH_CATEGORIES_AND_TAGS,
       },
     },
   });
@@ -154,17 +142,44 @@ export async function getPostsByCategory(
     .map((j) => shapeForCard(j.post as unknown as RawRow));
 }
 
-/**
- * Returns minimal post data for sitemap generation.
- * Fetches only slug, updated_at, published_at, and primary category.
- */
+export async function getPostsByTag(
+  tagSlug: string,
+  limit = 30,
+): Promise<PostSummary[]> {
+  const tag = await db.query.tags.findFirst({
+    where: eq(tags.slug, tagSlug),
+    columns: { id: true },
+  });
+  if (!tag) return [];
+
+  const joins = await db.query.postTags.findMany({
+    where: eq(postTags.tag_id, tag.id),
+    with: {
+      post: {
+        columns: CARD_COLUMNS,
+        with: WITH_CATEGORIES_AND_TAGS,
+      },
+    },
+  });
+
+  return joins
+    .filter((j) => j.post.status === "published" && j.post.published_at != null)
+    .sort(
+      (a, b) =>
+        (b.post.published_at?.getTime() ?? 0) -
+        (a.post.published_at?.getTime() ?? 0),
+    )
+    .slice(0, limit)
+    .map((j) => shapeForCard(j.post as unknown as RawRow));
+}
+
 export async function getPublishedPostsForSitemap(): Promise<
   Array<{ slug: string; categorySlug: string; updatedAt: Date }>
 > {
   const rows = await db.query.posts.findMany({
     where: eq(posts.status, "published"),
     columns: { slug: true, updated_at: true, published_at: true },
-    with: WITH_CATEGORIES,
+    with: WITH_CATEGORIES_AND_TAGS,
     orderBy: [desc(posts.published_at)],
   });
 
@@ -180,20 +195,12 @@ export async function getPublishedPostsForSitemap(): Promise<
   });
 }
 
-/**
- * Finds a published post by slug, verifying it belongs to the given category.
- * Returns null (→ notFound()) if the post doesn't exist, isn't published,
- * or doesn't belong to the specified category.
- *
- * Wrapped with React cache() so generateMetadata and the page component
- * share one DB round-trip per request.
- */
 export const getPostDetail = cache(
   async (categorySlug: string, postSlug: string): Promise<PostDetail | null> => {
     const row = await db.query.posts.findFirst({
       where: and(eq(posts.status, "published"), eq(posts.slug, postSlug)),
       columns: DETAIL_COLUMNS,
-      with: WITH_CATEGORIES,
+      with: WITH_CATEGORIES_AND_TAGS,
     });
 
     if (!row) return null;

@@ -12,4 +12,6 @@
 export * from "./posts";
 export * from "./categories";
 export * from "./post-categories";
+export * from "./tags";
+export * from "./post-tags";
 export * from "./admin-sessions";

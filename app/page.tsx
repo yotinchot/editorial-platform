@@ -7,11 +7,7 @@ import { TopicGrid } from "@/features/categories/components/topic-grid";
 import { PostCard } from "@/features/posts/components/post-card";
 import { SITE_NAME, SITE_DESCRIPTION, SITE_TAGLINE } from "@/lib/constants";
 import { getAllCategories } from "@/lib/data/categories";
-import {
-  getFeaturedPost,
-  getLatestPosts,
-  getPostsByType,
-} from "@/lib/data/posts";
+import { getFeaturedPost, getLatestPosts } from "@/lib/data/posts";
 import { canonicalUrl } from "@/lib/metadata";
 
 export const revalidate = 3600;
@@ -35,28 +31,27 @@ export function generateMetadata(): Metadata {
 }
 
 export default async function HomePage() {
-  const [featured, latest, travel, reading, allCategories] = await Promise.all([
+  const [featured, latest, allCategories] = await Promise.all([
     getFeaturedPost(),
-    getLatestPosts(3),
-    getPostsByType("travel", 3),
-    getPostsByType("reading", 3),
+    getLatestPosts(6),
     getAllCategories(),
   ]);
 
-  // If no featured post, fall back to the most recent published post
   const hero = featured ?? latest[0] ?? null;
-  const latestForGrid = hero ? latest.filter((p) => p.slug !== hero.slug) : latest;
+  const latestForGrid = hero
+    ? latest.filter((p) => p.slug !== hero.slug)
+    : latest;
 
   return (
     <>
-      {/* 1. Featured Story */}
+      {/* Featured Story */}
       {hero && (
         <Container className="pt-12 pb-16 sm:pt-16">
           <PostCard post={hero} orientation="horizontal" />
         </Container>
       )}
 
-      {/* 2. Latest Stories */}
+      {/* Latest Stories */}
       {latestForGrid.length > 0 && (
         <Container className="space-y-8 py-16">
           <SectionHeading title="Latest Stories" />
@@ -68,39 +63,7 @@ export default async function HomePage() {
         </Container>
       )}
 
-      {/* 3. Travel Stories */}
-      {travel.length > 0 && (
-        <Container className="space-y-8 py-16">
-          <SectionHeading
-            title="Travel Stories"
-            description="Itineraries and notes from the road."
-            href="/travel"
-          />
-          <div className="grid gap-10 sm:grid-cols-3">
-            {travel.map((post) => (
-              <PostCard key={post.slug} post={post} />
-            ))}
-          </div>
-        </Container>
-      )}
-
-      {/* 4. Reading Notes */}
-      {reading.length > 0 && (
-        <Container className="space-y-8 py-16">
-          <SectionHeading
-            title="Reading Notes"
-            description="Structured reflections on books worth sitting with."
-            href="/reading"
-          />
-          <div className="grid gap-10 sm:grid-cols-3">
-            {reading.map((post) => (
-              <PostCard key={post.slug} post={post} />
-            ))}
-          </div>
-        </Container>
-      )}
-
-      {/* 5. Explore Topics */}
+      {/* Explore Topics */}
       {allCategories.length > 0 && (
         <Container className="space-y-8 py-16">
           <SectionHeading title="Explore Topics" />
@@ -108,7 +71,7 @@ export default async function HomePage() {
         </Container>
       )}
 
-      {/* 6. About Preview */}
+      {/* About Preview */}
       <Container className="py-16">
         <AboutPreview />
       </Container>

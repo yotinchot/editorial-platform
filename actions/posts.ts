@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { posts, categories, postCategories } from "@/db/schema";
+import { posts, categories, postCategories, tags, postTags } from "@/db/schema";
 import { getSessionToken } from "@/lib/auth/cookies";
 import { verifySession } from "@/lib/auth/session";
 import { generatePostHTML } from "@/lib/html";
@@ -52,9 +52,9 @@ const updatePostSchema = z.object({
       "Slug may only contain lowercase letters, numbers, and hyphens",
     ),
   excerpt: z.string().max(500).optional().default(""),
-  type: z.enum(["travel", "reading", "essay"]),
   status: z.enum(["draft", "published"]),
   category_ids: z.array(z.string().uuid()),
+  tag_names: z.array(z.string().min(1).max(100)).default([]),
   content_json: z.unknown().nullable(),
   cover_image: coverImageSchema,
 });
@@ -65,13 +65,6 @@ const autosaveSchema = z.object({
 
 // ── createPostDraft ──────────────────────────────────────────────────────────
 
-/**
- * Create a new post as a draft with just a title.
- * Returns the created post row on success, or an error string.
- *
- * Called programmatically from NewPostForm (client component), which
- * then navigates to /admin/posts/[id]/edit.
- */
 export async function createPostDraft(rawData: {
   title: string;
 }): Promise<{ post: typeof posts.$inferSelect } | { error: string }> {
@@ -96,12 +89,6 @@ export async function createPostDraft(rawData: {
 
 // ── autosavePostDraft ────────────────────────────────────────────────────────
 
-/**
- * Autosave: write ONLY draft_content_json, draft_saved_at, and updated_at.
- *
- * Never touches content_json, content_html, or published_at — those are
- * written only on an explicit manual Save / Publish.
- */
 export async function autosavePostDraft(
   postId: string,
   rawData: { draft_content_json: unknown },
@@ -133,14 +120,6 @@ export async function autosavePostDraft(
 
 // ── updatePost ───────────────────────────────────────────────────────────────
 
-/**
- * Manual save: write all editable fields including published content.
- *
- * - Generates content_html server-side from content_json (no DOM).
- * - Sets published_at only on the first transition to "published".
- * - Updates category relationships (delete-all, re-insert).
- * - Enforces slug uniqueness (appends -2, -3 … if needed).
- */
 export async function updatePost(
   postId: string,
   rawData: unknown,
@@ -156,16 +135,13 @@ export async function updatePost(
     title,
     slug,
     excerpt,
-    type,
     status,
     category_ids,
+    tag_names,
     content_json,
     cover_image,
   } = parsed.data;
 
-  // L-3: Prevent publishing without at least one category.
-  // Uncategorized published posts have no reachable URL (the public route
-  // validates that the post belongs to the category in the URL segment).
   if (status === "published" && category_ids.length === 0) {
     return {
       error:
@@ -173,16 +149,8 @@ export async function updatePost(
     };
   }
 
-  // Ensure the slug is unique, excluding this post from the uniqueness check.
   const uniqueSlug = await ensureUniqueSlug(slug, postId);
 
-  // Generate HTML from TipTap JSON (server-side, no DOM).
-  // Abort the save on failure rather than storing empty HTML.
-  //
-  // Server-side safeguard: if any null-prototype attrs slipped through
-  // (e.g. via a code path that bypassed client normalisation), the
-  // JSON round-trip here converts them to plain objects before both
-  // HTML generation and the DB write.
   let content_html: string | null = null;
   let normalizedJson: unknown = null;
   if (content_json) {
@@ -196,22 +164,15 @@ export async function updatePost(
     }
   }
 
-  // Calculate reading time from rendered HTML so the public page always shows
-  // an accurate estimate without a separate fetch. Falls back to null if no
-  // HTML is available (e.g. post is saved before any content is written).
   const reading_time_minutes = content_html
     ? calculateReadingTime(content_html)
     : null;
 
   const now = new Date();
 
-  // Wrap post update + category rebuild in a single transaction so a partial
-  // failure (e.g. DB connection drop after DELETE but before INSERT) cannot
-  // leave the post in an inconsistent state with no categories.
   let updated: typeof posts.$inferSelect;
   try {
     updated = await db.transaction(async (tx) => {
-      // Read published_at inside the transaction for a consistent snapshot.
       const [current] = await tx
         .select({ published_at: posts.published_at })
         .from(posts)
@@ -220,7 +181,6 @@ export async function updatePost(
 
       if (!current) throw new Error("Post not found");
 
-      // Set published_at only on first transition to "published".
       const isBecomingPublished =
         status === "published" && !current.published_at;
 
@@ -230,13 +190,12 @@ export async function updatePost(
           title,
           slug: uniqueSlug,
           excerpt: excerpt || null,
-          type,
+          // type is intentionally not updated — column kept for backward compat
           status,
           content_json: normalizedJson ?? null,
           content_html,
           cover_image: cover_image ?? null,
           reading_time_minutes,
-          // Mirror latest content into draft columns so the editor reloads correctly.
           draft_content_json: normalizedJson ?? null,
           draft_saved_at: now,
           updated_at: now,
@@ -247,7 +206,7 @@ export async function updatePost(
 
       if (!post) throw new Error("Update failed");
 
-      // Rebuild category relationships: delete existing, insert new selection.
+      // Rebuild category relationships
       await tx
         .delete(postCategories)
         .where(eq(postCategories.post_id, postId));
@@ -261,6 +220,38 @@ export async function updatePost(
         );
       }
 
+      // Upsert tags and rebuild post_tags
+      const normalizedTagNames = tag_names
+        .map((n) => n.trim())
+        .filter(Boolean)
+        .map((n) => ({ name: n, slug: titleToSlug(n) || n.toLowerCase().replace(/\s+/g, "-") }));
+
+      await tx.delete(postTags).where(eq(postTags.post_id, postId));
+
+      if (normalizedTagNames.length > 0) {
+        // Upsert each tag, returning its id
+        const upsertedTags = await Promise.all(
+          normalizedTagNames.map(async ({ name, slug }) => {
+            const [tag] = await tx
+              .insert(tags)
+              .values({ name, slug })
+              .onConflictDoUpdate({
+                target: tags.slug,
+                set: { name, updated_at: now },
+              })
+              .returning({ id: tags.id });
+            return tag;
+          }),
+        );
+
+        await tx.insert(postTags).values(
+          upsertedTags.map((t) => ({
+            post_id: postId,
+            tag_id: t.id,
+          })),
+        );
+      }
+
       return post;
     });
   } catch (e) {
@@ -269,20 +260,16 @@ export async function updatePost(
 
   revalidatePath("/admin/posts");
   revalidatePath(`/admin/posts/${postId}/edit`);
-  // Revalidate public routes so ISR pages pick up the change immediately.
   revalidatePath("/");
   revalidatePath(`/[categorySlug]`, "page");
   revalidatePath(`/[categorySlug]/[postSlug]`, "page");
+  revalidatePath(`/tags/[slug]`, "page");
 
   return { post: updated };
 }
 
 // ── deletePost ───────────────────────────────────────────────────────────────
 
-/**
- * Permanently delete a post and all its category relationships.
- * (post_categories rows are cascade-deleted by the FK constraint.)
- */
 export async function deletePost(
   postId: string,
 ): Promise<{ success: true } | { error: string }> {
@@ -294,12 +281,8 @@ export async function deletePost(
   return { success: true };
 }
 
-// ── getPostsWithCategories ───────────────────────────────────────────────────
+// ── getAdminPosts ────────────────────────────────────────────────────────────
 
-/**
- * Fetch all posts with their category names for the admin post list.
- * Ordered newest-updated first.
- */
 export async function getAdminPosts() {
   await requireAuth();
 
@@ -307,6 +290,9 @@ export async function getAdminPosts() {
     with: {
       postCategories: {
         with: { category: true },
+      },
+      postTags: {
+        with: { tag: true },
       },
     },
     orderBy: (posts, { desc }) => [desc(posts.updated_at)],

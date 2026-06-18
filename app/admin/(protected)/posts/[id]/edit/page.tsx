@@ -11,17 +11,6 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-/**
- * /admin/posts/[id]/edit
- *
- * Server Component: fetches the post with its category relations and all
- * available categories, then delegates rendering to the PostEditor client
- * component.
- *
- * Draft recovery: passes `draft_content_json ?? content_json ?? null` to the
- * editor so the client always loads the most recent unsaved draft first.
- * (Logic lives inside PostEditor.)
- */
 export default async function EditPostPage({
   params,
 }: {
@@ -35,6 +24,9 @@ export default async function EditPostPage({
       with: {
         postCategories: {
           with: { category: true },
+        },
+        postTags: {
+          with: { tag: true },
         },
       },
     }),

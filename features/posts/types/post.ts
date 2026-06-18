@@ -10,24 +10,26 @@ export interface CoverImageSummary {
   fitMode?: "cover" | "contain";
 }
 
-/**
- * Shape of a post as consumed by display components.
- * Mirrors the DB row shape so swapping placeholder → real data requires
- * no component changes — only the data source changes.
- */
+export interface TagSummary {
+  name: string;
+  slug: string;
+}
+
 export interface PostSummary {
   slug: string;
   title: string;
   excerpt: string | null;
   category: string;
   categorySlug: string;
-  type: PostType;
-  publishedAt: string; // ISO date string
+  /** @deprecated Type concept is being phased out — kept for backward compat. */
+  type?: PostType;
+  publishedAt: string;
   readingTimeMinutes: number | null;
   coverImage?: CoverImageSummary | null;
+  tags: TagSummary[];
 }
 
 export interface PostDetail extends PostSummary {
   contentHtml: string | null;
-  updatedAt: string; // ISO date string — used for OG modifiedTime and JSON-LD dateModified
+  updatedAt: string;
 }

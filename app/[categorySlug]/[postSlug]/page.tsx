@@ -137,6 +137,21 @@ export default async function PostPage({
               </>
             )}
           </div>
+
+          {/* Tags */}
+          {post.tags.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-1.5">
+              {post.tags.map((tag) => (
+                <Link
+                  key={tag.slug}
+                  href={`/tags/${tag.slug}`}
+                  className="rounded-sm bg-muted px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-accent/10 hover:text-accent"
+                >
+                  {tag.name}
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </Container>
 
