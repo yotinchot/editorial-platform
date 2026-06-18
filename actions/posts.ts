@@ -176,7 +176,13 @@ export async function updatePost(
   let content_html: string | null = null;
   if (content_json) {
     try {
-      content_html = generatePostHTML(content_json);
+      // ProseMirror's Node.toJSON() returns attrs as Object.create(null) (null-prototype
+      // objects). React's encodeReply treats these as exotic values and wraps them in
+      // temporary client reference proxies. Accessing any property on those proxies
+      // server-side throws "Cannot access X on the server". Round-tripping through
+      // JSON converts all null-prototype objects to plain {} objects.
+      const normalizedJson = JSON.parse(JSON.stringify(content_json));
+      content_html = generatePostHTML(normalizedJson);
     } catch (err) {
       const detail = err instanceof Error ? err.message : String(err);
       console.error("[updatePost] generatePostHTML threw:", err);
