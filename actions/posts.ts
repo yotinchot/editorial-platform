@@ -172,14 +172,16 @@ export async function updatePost(
   const uniqueSlug = await ensureUniqueSlug(slug, postId);
 
   // Generate HTML from TipTap JSON (server-side, no DOM).
-  // Returns null on failure — abort the save rather than storing empty HTML.
-  const content_html = content_json ? generatePostHTML(content_json) : null;
-
-  if (content_json && content_html === null) {
-    return {
-      error:
-        "Failed to generate post HTML from editor content. Please try saving again.",
-    };
+  // Abort the save on failure rather than storing empty HTML.
+  let content_html: string | null = null;
+  if (content_json) {
+    try {
+      content_html = generatePostHTML(content_json);
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      console.error("[updatePost] generatePostHTML threw:", err);
+      return { error: `HTML generation failed: ${detail}` };
+    }
   }
 
   // Calculate reading time from rendered HTML so the public page always shows

@@ -37,15 +37,10 @@ const extensions = [
 /**
  * Convert TipTap ProseMirror JSON to an HTML string.
  *
- * Returns null when generation fails so the caller can decide whether to
- * abort the save or warn the user. Never silently stores empty HTML.
+ * Throws on failure so callers receive the actual error message rather than
+ * a generic null. Callers must wrap in try/catch.
  */
-export function generatePostHTML(json: unknown): string | null {
+export function generatePostHTML(json: unknown): string {
   if (!json || typeof json !== "object") return "";
-  try {
-    return generateHTML(json as JSONContent, extensions);
-  } catch (err) {
-    console.error("[generatePostHTML] Failed to generate HTML from TipTap JSON:", err);
-    return null;
-  }
+  return generateHTML(json as JSONContent, extensions);
 }
