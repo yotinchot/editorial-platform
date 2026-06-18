@@ -70,6 +70,7 @@ function shapeForCard(row: RawRow): PostSummary {
           height: cover.height,
           focalX: cover.focalX ?? 0.5,
           focalY: cover.focalY ?? 0.5,
+          fitMode: cover.fitMode,
         }
       : null,
   };

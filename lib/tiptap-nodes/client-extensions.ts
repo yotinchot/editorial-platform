@@ -18,11 +18,13 @@ import { Node, mergeAttributes } from "@tiptap/core";
 import Image from "@tiptap/extension-image";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 
+import { InlineImageNodeView } from "@/components/editor/blocks/inline-image-node-view";
 import { ReadingBlockView } from "@/components/editor/blocks/reading-block-view";
 import { TravelGalleryBlockView } from "@/components/editor/blocks/travel-gallery-block-view";
 
 // ── ImageNode ────────────────────────────────────────────────────────────────
-// Extends base Image with width + height attributes for CLS prevention.
+// Extends base Image with width, height, fitMode, and focal point attributes.
+// Schema must mirror editor-image-node.ts (server). NodeView is client-only.
 
 export const ImageNode = Image.extend({
   addAttributes() {
@@ -38,7 +40,26 @@ export const ImageNode = Image.extend({
         renderHTML: (attrs) => (attrs.height ? { height: attrs.height } : {}),
         parseHTML: (el) => el.getAttribute("height"),
       },
+      fitMode: {
+        default: "natural",
+        renderHTML: () => ({}),
+        parseHTML: (el) => el.getAttribute("data-fit-mode") ?? "natural",
+      },
+      focalX: {
+        default: 0.5,
+        renderHTML: () => ({}),
+        parseHTML: () => 0.5,
+      },
+      focalY: {
+        default: 0.5,
+        renderHTML: () => ({}),
+        parseHTML: () => 0.5,
+      },
     };
+  },
+
+  addNodeView() {
+    return ReactNodeViewRenderer(InlineImageNodeView);
   },
 });
 
@@ -201,6 +222,7 @@ export const TravelGalleryBlock = Node.create({
             if (!Array.isArray(parsed)) return [];
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             return (parsed as any[]).map((img, i) => ({
+              fitMode: "cover",
               ...img,
               slotIndex: img.slotIndex ?? i,
             }));

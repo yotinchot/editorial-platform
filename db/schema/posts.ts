@@ -57,6 +57,8 @@ export type CoverImage = {
   focalY: number;
   /** Cloudinary public_id — stored for future transformation use. */
   publicId?: string;
+  /** CSS object-fit mode for the cover image hero display. */
+  fitMode?: "cover" | "contain";
 };
 
 /**

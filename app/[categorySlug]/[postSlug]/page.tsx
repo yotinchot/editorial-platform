@@ -84,13 +84,13 @@ export default async function PostPage({
     <>
       {/* Cover image */}
       {post.coverImage && (
-        <div className="relative h-[55vh] min-h-64 max-h-[600px] w-full overflow-hidden bg-muted">
+        <div className="relative h-[55vh] min-h-64 max-h-[640px] w-full overflow-hidden bg-muted">
           <Image
             src={post.coverImage.url}
             alt={post.coverImage.alt}
             fill
             priority
-            className="object-cover"
+            className={post.coverImage.fitMode === "contain" ? "object-contain" : "object-cover"}
             style={{
               objectPosition: `${(post.coverImage.focalX ?? 0.5) * 100}% ${(post.coverImage.focalY ?? 0.5) * 100}%`,
             }}

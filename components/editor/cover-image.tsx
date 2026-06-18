@@ -3,6 +3,8 @@
 import { useRef, useState } from "react";
 import { ImagePlus, Loader2, X } from "lucide-react";
 
+type FitMode = "cover" | "contain";
+
 import type { EditorialImage } from "@/types/image";
 import { uploadEditorialImage, validateImageFile } from "@/lib/upload-image";
 
@@ -34,6 +36,19 @@ export function CoverImage({ value, onChange }: CoverImageProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFocalClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!value) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const focalX = Math.round(((e.clientX - rect.left) / rect.width) * 100) / 100;
+    const focalY = Math.round(((e.clientY - rect.top) / rect.height) * 100) / 100;
+    onChange({ ...value, focalX, focalY });
+  };
+
+  const setFitMode = (mode: FitMode) => {
+    if (!value) return;
+    onChange({ ...value, fitMode: mode });
+  };
 
   const triggerFileInput = () => fileInputRef.current?.click();
 
@@ -75,20 +90,36 @@ export function CoverImage({ value, onChange }: CoverImageProps) {
       {value ? (
         // ── Preview state ──────────────────────────────────────────────
         <div className="space-y-2">
-          {/* Image preview */}
-          <div className="relative aspect-video overflow-hidden rounded-sm border border-border">
+          {/* Image preview — click to set focal point */}
+          <div
+            className="relative aspect-video overflow-hidden rounded-md border border-border cursor-crosshair bg-muted"
+            onClick={handleFocalClick}
+            title="คลิกเพื่อตั้งจุดโฟกัส"
+          >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={value.url}
               alt={value.alt}
               width={value.width}
               height={value.height}
-              className="h-full w-full object-cover"
+              className={`h-full w-full ${value.fitMode === "contain" ? "object-contain" : "object-cover"}`}
+              style={{
+                objectPosition: `${(value.focalX ?? 0.5) * 100}% ${(value.focalY ?? 0.5) * 100}%`,
+              }}
+            />
+            {/* Focal point indicator */}
+            <div
+              className="absolute size-3 rounded-full border-2 border-white shadow pointer-events-none bg-accent/80"
+              style={{
+                left: `${(value.focalX ?? 0.5) * 100}%`,
+                top: `${(value.focalY ?? 0.5) * 100}%`,
+                transform: "translate(-50%, -50%)",
+              }}
             />
             {/* Remove button */}
             <button
               type="button"
-              onClick={() => onChange(null)}
+              onClick={(e) => { e.stopPropagation(); onChange(null); }}
               aria-label="ลบภาพหน้าปก"
               className="absolute right-1.5 top-1.5 flex size-6 items-center justify-center rounded-sm bg-background/90 text-foreground/50 transition-colors hover:text-destructive"
             >
@@ -96,15 +127,40 @@ export function CoverImage({ value, onChange }: CoverImageProps) {
             </button>
           </div>
 
-          {/* Alt text edit */}
-          <input
-            type="text"
-            value={value.alt}
-            onChange={(e) => onChange({ ...value, alt: e.target.value })}
-            placeholder="Alt text…"
-            aria-label="Alt text ของภาพหน้าปก"
-            className="w-full border-0 bg-transparent px-0 text-xs text-foreground/60 placeholder:text-foreground/30 focus:outline-none"
-          />
+          {/* fitMode toggle */}
+          <div className="flex items-center gap-1">
+            <span className="text-[0.6rem] text-foreground/30 uppercase tracking-wide">Fit</span>
+            {(["cover", "contain"] as FitMode[]).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => setFitMode(mode)}
+                className={
+                  "px-1.5 py-0.5 text-[0.6rem] rounded-sm border transition-colors " +
+                  ((value.fitMode ?? "cover") === mode
+                    ? "bg-foreground text-background border-foreground"
+                    : "border-border text-foreground/40 hover:text-foreground")
+                }
+              >
+                {mode.charAt(0).toUpperCase() + mode.slice(1)}
+              </button>
+            ))}
+          </div>
+
+          {/* Alt text */}
+          <div className="flex items-center gap-1.5">
+            <input
+              type="text"
+              value={value.alt}
+              onChange={(e) => onChange({ ...value, alt: e.target.value })}
+              placeholder="Alt text…"
+              aria-label="Alt text ของภาพหน้าปก"
+              className="flex-1 border-0 bg-transparent px-0 text-xs text-foreground/60 placeholder:text-foreground/30 focus:outline-none"
+            />
+            {!value.alt && (
+              <span className="shrink-0 text-[0.6rem] text-amber-600/70">⚠</span>
+            )}
+          </div>
 
           {/* Replace */}
           <button

@@ -33,6 +33,8 @@ export interface GalleryImage {
    */
   slotIndex: number;
   publicId?: string;
+  /** CSS object-fit mode for this gallery slot. Defaults to "cover". */
+  fitMode?: "cover" | "contain" | "natural";
 }
 
 export interface TravelGalleryBlockAttrs {
@@ -102,6 +104,10 @@ export const TravelGalleryBlock = Node.create({
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const figures: any[] = sorted.map((img) => {
+      const fitMode = img.fitMode ?? "cover";
+      const figAttrs: Record<string, string> = { class: "travel-gallery__item" };
+      if (fitMode !== "cover") figAttrs["data-fit-mode"] = fitMode;
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const figChildren: any[] = [
         [
@@ -118,7 +124,7 @@ export const TravelGalleryBlock = Node.create({
       if (img.caption) {
         figChildren.push(["figcaption", {}, img.caption]);
       }
-      return ["figure", { class: "travel-gallery__item" }, ...figChildren];
+      return ["figure", figAttrs, ...figChildren];
     });
 
     // Note: HTMLAttributes already contains data-layout from addAttributes.layout.renderHTML,

@@ -25,4 +25,6 @@ export type EditorialImage = {
   focalY: number;
   /** Cloudinary public_id — stored for future transformation use. */
   publicId?: string;
+  /** CSS object-fit mode. Cover and contain require a container height; natural lets the image size freely. */
+  fitMode?: "cover" | "contain" | "natural";
 };

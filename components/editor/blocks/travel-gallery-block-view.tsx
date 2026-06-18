@@ -19,6 +19,9 @@ function stopProp(e: React.KeyboardEvent) {
   e.stopPropagation();
 }
 
+type FitMode = "cover" | "contain" | "natural";
+const FIT_MODES: FitMode[] = ["cover", "contain", "natural"];
+
 const LAYOUT_OPTIONS: { value: GalleryLayout; label: string }[] = [
   { value: "single", label: "Single" },
   { value: "two-up", label: "Two up" },
@@ -213,12 +216,19 @@ export function TravelGalleryBlockView({
             {slot?.url ? (
               // ── Filled slot ────────────────────────────────────────────
               <div className="space-y-1">
-                <div className="group relative aspect-video overflow-hidden rounded-sm border border-border">
+                <div className="group relative aspect-video overflow-hidden rounded-md border border-border bg-muted">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={slot.url}
                     alt={slot.alt || ""}
-                    className="h-full w-full object-cover"
+                    className={
+                      "h-full w-full " +
+                      ((slot.fitMode ?? "cover") === "contain"
+                        ? "object-contain"
+                        : (slot.fitMode ?? "cover") === "natural"
+                          ? "object-scale-down"
+                          : "object-cover")
+                    }
                   />
                   {/* Replace / remove overlay */}
                   <div className="absolute inset-0 flex items-end justify-between gap-1 bg-black/40 p-1.5 opacity-0 transition-opacity group-hover:opacity-100">
@@ -243,6 +253,26 @@ export function TravelGalleryBlockView({
                       <X className="size-3" />
                     </button>
                   </div>
+                </div>
+
+                {/* fitMode buttons */}
+                <div className="flex gap-0.5">
+                  {FIT_MODES.map((mode) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => updateImageField(i, "fitMode", mode)}
+                      onKeyDown={stopProp}
+                      className={
+                        "px-1.5 py-0.5 text-[0.6rem] rounded-sm border transition-colors " +
+                        ((slot.fitMode ?? "cover") === mode
+                          ? "bg-foreground text-background border-foreground"
+                          : "bg-background text-foreground/40 border-border hover:text-foreground")
+                      }
+                    >
+                      {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                    </button>
+                  ))}
                 </div>
 
                 {/* Alt text */}

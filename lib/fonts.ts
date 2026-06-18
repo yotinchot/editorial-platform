@@ -1,23 +1,23 @@
 import {
-  Fraunces,
+  Cormorant_Garamond,
   Inter,
   JetBrains_Mono,
   Noto_Sans_Thai,
   Noto_Serif_Thai,
 } from "next/font/google";
 
-export const fontSerif = Fraunces({
+export const fontSerif = Cormorant_Garamond({
   variable: "--font-serif",
   subsets: ["latin"],
-  axes: ["opsz", "SOFT", "WONK"],
   style: ["normal", "italic"],
-  weight: "variable",
+  weight: ["300", "400", "500", "600", "700"],
+  display: "swap",
 });
 
 export const fontSans = Inter({
   variable: "--font-sans",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600"],
 });
 
 export const fontMono = JetBrains_Mono({

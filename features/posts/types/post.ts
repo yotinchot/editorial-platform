@@ -7,6 +7,7 @@ export interface CoverImageSummary {
   height: number;
   focalX: number;
   focalY: number;
+  fitMode?: "cover" | "contain";
 }
 
 /**

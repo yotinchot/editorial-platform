@@ -27,7 +27,23 @@ const ImageNode = Image.extend({
         renderHTML: (attrs) => (attrs.height ? { height: attrs.height } : {}),
         parseHTML: (el) => el.getAttribute("height"),
       },
+      fitMode: {
+        default: "natural",
+        renderHTML: () => ({}),
+        parseHTML: (el) => el.getAttribute("data-fit-mode") ?? "natural",
+      },
+      focalX: { default: 0.5, renderHTML: () => ({}), parseHTML: () => 0.5 },
+      focalY: { default: 0.5, renderHTML: () => ({}), parseHTML: () => 0.5 },
     };
+  },
+  renderHTML({ node, HTMLAttributes }) {
+    const { fitMode = "natural", focalX = 0.5, focalY = 0.5 } = node.attrs;
+    const extra = { class: "article-image" };
+    if (fitMode !== "natural") {
+      extra["data-fit-mode"] = fitMode;
+      extra.style = `object-fit:${fitMode};object-position:${focalX * 100}% ${focalY * 100}%;`;
+    }
+    return ["img", mergeAttributes(HTMLAttributes, extra)];
   },
 });
 

@@ -37,6 +37,7 @@ const coverImageSchema = z
     focalX: z.number().min(0).max(1),
     focalY: z.number().min(0).max(1),
     publicId: z.string().optional(),
+    fitMode: z.enum(["cover", "contain"]).optional(),
   })
   .nullable();
 
