@@ -2,7 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { PostCoverPlaceholder } from "@/features/posts/components/post-cover-placeholder";
-import { ThaiHeadingText } from "@/components/shared/thai-heading-text";
 import type { PostSummary } from "@/features/posts/types/post";
 import { formatPostDate, formatReadingTime } from "@/lib/format";
 import { containsThai } from "@/lib/thai-font";
@@ -26,11 +25,11 @@ export function PostCard({ post, orientation = "vertical" }: PostCardProps) {
           <h3
             className={
               titleIsThai
-                ? "mt-3 font-serif-thai font-semibold text-3xl leading-tight transition-colors group-hover:text-accent sm:text-4xl"
+                ? "mt-3 font-kanit font-medium text-3xl leading-tight transition-colors group-hover:text-accent sm:text-4xl"
                 : "mt-3 font-serif text-3xl italic leading-tight transition-colors group-hover:text-accent sm:text-4xl"
             }
           >
-            <ThaiHeadingText>{post.title}</ThaiHeadingText>
+            {post.title}
           </h3>
           {post.excerpt ? (
             <p className="mt-4 text-muted-foreground">{post.excerpt}</p>

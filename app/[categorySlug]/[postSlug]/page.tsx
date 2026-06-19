@@ -10,7 +10,6 @@ import { formatPostDate, formatReadingTime } from "@/lib/format";
 import { getPostDetail } from "@/lib/data/posts";
 import { extractToc } from "@/lib/toc";
 import { containsThai } from "@/lib/thai-font";
-import { ThaiHeadingText } from "@/components/shared/thai-heading-text";
 import { SITE_NAME } from "@/lib/constants";
 import { canonicalUrl, SITE_AUTHOR } from "@/lib/metadata";
 
@@ -121,11 +120,11 @@ export default async function PostPage({
           <h1
             className={
               titleIsThai
-                ? "font-serif-thai font-semibold text-4xl leading-snug sm:text-[2.75rem]"
+                ? "font-kanit font-medium text-4xl leading-snug sm:text-[2.75rem]"
                 : "font-serif italic text-4xl leading-tight sm:text-5xl"
             }
           >
-            <ThaiHeadingText>{post.title}</ThaiHeadingText>
+            {post.title}
           </h1>
 
           {post.excerpt && (

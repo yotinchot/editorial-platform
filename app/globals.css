@@ -10,6 +10,7 @@
   --font-sans: var(--font-sans);
   --font-serif: var(--font-serif);
   --font-serif-thai: var(--font-serif-thai);
+  --font-kanit: var(--font-kanit);
   --font-mono: var(--font-mono);
   --font-heading: var(--font-serif);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -200,11 +201,11 @@
 }
 
 /*
-  Scale digit sequences inside Thai headings to optically align with Thai glyph height.
-  Root cause: Noto Serif Thai Latin digit glyphs (U+0-FF file) render at ~72% cap-height
-  while Thai glyphs sit at ~56% — a 29% mismatch visible at display sizes (48px+).
-  0.78em ≈ 56/72 closes the gap. Applies to H1 via ThaiHeadingText React component
-  and to H2/H3 via processArticleHeadings() HTML transformation.
+  Scale digit sequences inside Noto Serif Thai article headings (H2/H3) to align
+  with Thai glyph height. Noto Serif Thai digit cap-height ≈ 72% em vs Thai ≈ 56%
+  em — 0.78 ≈ 56/72 closes the gap.
+  Applied only to article body headings via processArticleHeadings() HTML transform.
+  Display titles (H1, featured card) use Kanit which has native digit/Thai harmony.
 */
 .thai-heading-number {
   font-size: 0.78em;
