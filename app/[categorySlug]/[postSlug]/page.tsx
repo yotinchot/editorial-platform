@@ -121,7 +121,7 @@ export default async function PostPage({
           <h1
             className={
               titleIsThai
-                ? "font-serif-thai font-bold text-4xl leading-tight sm:text-5xl"
+                ? "font-serif-thai font-semibold text-4xl leading-snug sm:text-[2.75rem]"
                 : "font-serif italic text-4xl leading-tight sm:text-5xl"
             }
           >

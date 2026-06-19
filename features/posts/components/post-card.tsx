@@ -2,8 +2,10 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { PostCoverPlaceholder } from "@/features/posts/components/post-cover-placeholder";
+import { ThaiHeadingText } from "@/components/shared/thai-heading-text";
 import type { PostSummary } from "@/features/posts/types/post";
 import { formatPostDate, formatReadingTime } from "@/lib/format";
+import { containsThai } from "@/lib/thai-font";
 
 interface PostCardProps {
   post: PostSummary;
@@ -15,13 +17,20 @@ export function PostCard({ post, orientation = "vertical" }: PostCardProps) {
   const href = `/${post.categorySlug}/${post.slug}`;
 
   if (orientation === "horizontal") {
+    const titleIsThai = containsThai(post.title);
     return (
       <Link href={href} className="group grid gap-6 sm:grid-cols-2 sm:gap-10">
         <PostCover post={post} className="aspect-4/3" />
         <div className="flex flex-col justify-center">
           <PostMeta post={post} />
-          <h3 className="mt-3 font-serif text-3xl italic leading-tight transition-colors group-hover:text-accent sm:text-4xl">
-            {post.title}
+          <h3
+            className={
+              titleIsThai
+                ? "mt-3 font-serif-thai font-semibold text-3xl leading-tight transition-colors group-hover:text-accent sm:text-4xl"
+                : "mt-3 font-serif text-3xl italic leading-tight transition-colors group-hover:text-accent sm:text-4xl"
+            }
+          >
+            <ThaiHeadingText>{post.title}</ThaiHeadingText>
           </h3>
           {post.excerpt ? (
             <p className="mt-4 text-muted-foreground">{post.excerpt}</p>
