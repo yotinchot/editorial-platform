@@ -9,7 +9,6 @@ import { Container } from "@/components/shared/container";
 import { formatPostDate, formatReadingTime } from "@/lib/format";
 import { getPostDetail } from "@/lib/data/posts";
 import { extractToc } from "@/lib/toc";
-import { containsThai } from "@/lib/thai-font";
 import { SITE_NAME } from "@/lib/constants";
 import { canonicalUrl, SITE_AUTHOR } from "@/lib/metadata";
 
@@ -61,7 +60,6 @@ export default async function PostPage({
 
   const toc = extractToc(post.contentHtml);
   const hasToc = toc.length >= 2;
-  const titleIsThai = containsThai(post.title);
 
   const articleJsonLd = {
     "@context": "https://schema.org",
@@ -117,13 +115,7 @@ export default async function PostPage({
             </Link>
           </nav>
 
-          <h1
-            className={
-              titleIsThai
-                ? "font-kanit font-medium text-4xl leading-snug sm:text-[2.75rem]"
-                : "font-serif italic text-4xl leading-tight sm:text-5xl"
-            }
-          >
+          <h1 className="font-serif text-4xl italic leading-tight sm:text-5xl">
             {post.title}
           </h1>
 

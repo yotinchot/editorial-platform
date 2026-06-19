@@ -5,7 +5,6 @@ import { Container } from "@/components/shared/container";
 import { PostCard } from "@/features/posts/components/post-card";
 import { getCategoryBySlug } from "@/lib/data/categories";
 import { getPostsByCategory } from "@/lib/data/posts";
-import { containsThai } from "@/lib/thai-font";
 import { canonicalUrl } from "@/lib/metadata";
 
 export const revalidate = 3600;
@@ -54,13 +53,7 @@ export default async function CategoryPage({
         <p className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
           Category
         </p>
-        <h1
-          className={
-            containsThai(category.name)
-              ? "mt-2 font-kanit font-medium text-4xl sm:text-5xl"
-              : "mt-2 font-serif italic text-4xl sm:text-5xl"
-          }
-        >
+        <h1 className="mt-2 font-serif text-4xl italic sm:text-5xl">
           {category.name}
         </h1>
         {category.description && (

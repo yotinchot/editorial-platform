@@ -7,7 +7,6 @@ import { PostCard } from "@/features/posts/components/post-card";
 import { db } from "@/db";
 import { tags } from "@/db/schema";
 import { getPostsByTag } from "@/lib/data/posts";
-import { containsThai } from "@/lib/thai-font";
 import { SITE_NAME } from "@/lib/constants";
 
 export const revalidate = 3600;
@@ -50,13 +49,7 @@ export default async function TagPage({
     <Container className="py-12 sm:py-16">
       <div className="mb-10">
         <p className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">Tag</p>
-        <h1
-          className={
-            containsThai(tag.name)
-              ? "font-kanit font-medium text-3xl text-foreground sm:text-4xl"
-              : "font-serif italic text-3xl text-foreground sm:text-4xl"
-          }
-        >
+        <h1 className="font-serif text-3xl text-foreground sm:text-4xl">
           {tag.name}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">

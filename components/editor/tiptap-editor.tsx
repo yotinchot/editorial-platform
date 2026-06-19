@@ -90,30 +90,6 @@ export default function TipTapEditor({
     };
   }, [editor]);
 
-  // Apply Thai-font class to h2/h3 nodes that contain Thai characters.
-  // Mirrors the server-side processArticleHeadings() logic so the editor
-  // preview matches the public reading page.
-  useEffect(() => {
-    if (!editor) return;
-
-    const applyHeadingFonts = () => {
-      const dom = editor.view.dom;
-      dom.querySelectorAll("h2, h3").forEach((el) => {
-        if (/[฀-๿]/.test(el.textContent ?? "")) {
-          el.classList.add("heading-thai");
-        } else {
-          el.classList.remove("heading-thai");
-        }
-      });
-    };
-
-    applyHeadingFonts();
-    editor.on("update", applyHeadingFonts);
-    return () => {
-      editor.off("update", applyHeadingFonts);
-    };
-  }, [editor]);
-
   return (
     <div className="rounded-sm border border-border focus-within:ring-2 focus-within:ring-ring/50">
       <EditorToolbar editor={editor} onImageUpload={onImageUpload} />

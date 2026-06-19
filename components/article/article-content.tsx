@@ -1,4 +1,4 @@
-import { processArticleHeadings } from "@/lib/toc";
+import { injectHeadingIds } from "@/lib/toc";
 
 interface ArticleContentProps {
   html: string;
@@ -10,7 +10,7 @@ interface ArticleContentProps {
  * Content is generated server-side by our own serialiser — no user-supplied HTML.
  */
 export function ArticleContent({ html }: ArticleContentProps) {
-  const processed = processArticleHeadings(html);
+  const processed = injectHeadingIds(html);
   return (
     <div
       className="article-prose"

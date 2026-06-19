@@ -1,5 +1,3 @@
-import { containsThai, wrapDigitsInHTML } from "./thai-font";
-
 export interface TocEntry {
   id: string;
   text: string;
@@ -8,7 +6,7 @@ export interface TocEntry {
 
 /**
  * Extracts H2/H3 headings from content_html for table of contents rendering.
- * IDs are assigned by sequential counter — must match `processArticleHeadings` order.
+ * IDs are assigned by sequential counter — must match injectHeadingIds order.
  */
 export function extractToc(contentHtml: string | null): TocEntry[] {
   if (!contentHtml) return [];
@@ -21,29 +19,12 @@ export function extractToc(contentHtml: string | null): TocEntry[] {
 }
 
 /**
- * Adds sequential id attributes and Thai-font classes to H2/H3 tags.
- *
- * - id="h-N" — sequential anchor for TOC links (must match extractToc order).
- * - class="heading-thai" — signals CSS to use Noto Serif Thai for the entire
- *   heading, including numerals and punctuation, when Thai text is present.
- *   Pure Latin headings receive no class and default to Cormorant Garamond.
+ * Adds sequential id attributes to H2/H3 tags in HTML string.
+ * Counter matches extractToc so TOC anchor links resolve correctly.
  */
-export function processArticleHeadings(html: string): string {
-  let counter = 0;
-  return html.replace(
-    /<(h[23])([^>]*)>([\s\S]*?)<\/\1>/gi,
-    (_, tag, attrs: string, content: string) => {
-      const id = `h-${counter++}`;
-      const text = content.replace(/<[^>]+>/g, "");
-      const isThai = containsThai(text);
-      const fontClass = isThai ? " heading-thai" : "";
-      const processedContent = isThai ? wrapDigitsInHTML(content) : content;
-      return `<${tag}${attrs} id="${id}"${fontClass ? ` class="${fontClass}"` : ""}>${processedContent}</${tag}>`;
-    },
-  );
-}
-
-/** @deprecated Use processArticleHeadings — adds IDs and Thai font class. */
 export function injectHeadingIds(html: string): string {
-  return processArticleHeadings(html);
+  let i = 0;
+  return html.replace(/<(h[23])([^>]*)>/gi, (_, tag, attrs: string) => {
+    return `<${tag}${attrs} id="h-${i++}">`;
+  });
 }
