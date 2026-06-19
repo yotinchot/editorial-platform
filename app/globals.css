@@ -199,6 +199,20 @@
   font-style: normal;
 }
 
+/*
+  Scale digit sequences inside Thai headings to optically align with Thai glyph height.
+  Root cause: Noto Serif Thai Latin digit glyphs (U+0-FF file) render at ~72% cap-height
+  while Thai glyphs sit at ~56% — a 29% mismatch visible at display sizes (48px+).
+  0.78em ≈ 56/72 closes the gap. Applies to H1 via ThaiHeadingText React component
+  and to H2/H3 via processArticleHeadings() HTML transformation.
+*/
+.thai-heading-number {
+  font-size: 0.78em;
+  line-height: 1;
+  vertical-align: baseline;
+  letter-spacing: normal;
+}
+
 .article-prose p {
   margin-bottom: 1.6rem;
 }

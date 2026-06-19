@@ -1,4 +1,4 @@
-import { containsThai } from "./thai-font";
+import { containsThai, wrapDigitsInHTML } from "./thai-font";
 
 export interface TocEntry {
   id: string;
@@ -35,8 +35,10 @@ export function processArticleHeadings(html: string): string {
     (_, tag, attrs: string, content: string) => {
       const id = `h-${counter++}`;
       const text = content.replace(/<[^>]+>/g, "");
-      const fontClass = containsThai(text) ? " heading-thai" : "";
-      return `<${tag}${attrs} id="${id}"${fontClass ? ` class="${fontClass}"` : ""}>${content}</${tag}>`;
+      const isThai = containsThai(text);
+      const fontClass = isThai ? " heading-thai" : "";
+      const processedContent = isThai ? wrapDigitsInHTML(content) : content;
+      return `<${tag}${attrs} id="${id}"${fontClass ? ` class="${fontClass}"` : ""}>${processedContent}</${tag}>`;
     },
   );
 }

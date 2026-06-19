@@ -10,6 +10,7 @@ import { formatPostDate, formatReadingTime } from "@/lib/format";
 import { getPostDetail } from "@/lib/data/posts";
 import { extractToc } from "@/lib/toc";
 import { containsThai } from "@/lib/thai-font";
+import { ThaiHeadingText } from "@/components/shared/thai-heading-text";
 import { SITE_NAME } from "@/lib/constants";
 import { canonicalUrl, SITE_AUTHOR } from "@/lib/metadata";
 
@@ -124,7 +125,7 @@ export default async function PostPage({
                 : "font-serif italic text-4xl leading-tight sm:text-5xl"
             }
           >
-            {post.title}
+            <ThaiHeadingText>{post.title}</ThaiHeadingText>
           </h1>
 
           {post.excerpt && (

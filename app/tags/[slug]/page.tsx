@@ -8,6 +8,7 @@ import { db } from "@/db";
 import { tags } from "@/db/schema";
 import { getPostsByTag } from "@/lib/data/posts";
 import { containsThai } from "@/lib/thai-font";
+import { ThaiHeadingText } from "@/components/shared/thai-heading-text";
 import { SITE_NAME } from "@/lib/constants";
 
 export const revalidate = 3600;
@@ -57,7 +58,7 @@ export default async function TagPage({
               : "font-serif italic text-3xl text-foreground sm:text-4xl"
           }
         >
-          {tag.name}
+          <ThaiHeadingText>{tag.name}</ThaiHeadingText>
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           {tagPosts.length === 0

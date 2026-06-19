@@ -6,6 +6,7 @@ import { PostCard } from "@/features/posts/components/post-card";
 import { getCategoryBySlug } from "@/lib/data/categories";
 import { getPostsByCategory } from "@/lib/data/posts";
 import { containsThai } from "@/lib/thai-font";
+import { ThaiHeadingText } from "@/components/shared/thai-heading-text";
 import { canonicalUrl } from "@/lib/metadata";
 
 export const revalidate = 3600;
@@ -61,7 +62,7 @@ export default async function CategoryPage({
               : "mt-2 font-serif italic text-4xl sm:text-5xl"
           }
         >
-          {category.name}
+          <ThaiHeadingText>{category.name}</ThaiHeadingText>
         </h1>
         {category.description && (
           <p className="mt-3 max-w-xl text-muted-foreground">

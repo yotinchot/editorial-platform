@@ -12,3 +12,20 @@ const THAI_RE = /[฀-๿]/;
 export function containsThai(text: string): boolean {
   return THAI_RE.test(text);
 }
+
+/**
+ * In an HTML string, wraps bare digit sequences with <span class="thai-heading-number">.
+ * Digits inside HTML tag attributes are skipped — only text-node digits are wrapped.
+ * Call only on headings that containsThai() — pure Latin headings are unchanged.
+ *
+ * Digit pattern covers: 10  30  2026  1,000  10.5  90%
+ */
+export function wrapDigitsInHTML(html: string): string {
+  // Alternation: consume HTML tags first (no capture), or capture digit sequences.
+  return html.replace(/<[^>]+>|(\d+(?:[,.]\d+)*%?)/g, (match, digits) => {
+    if (digits !== undefined) {
+      return `<span class="thai-heading-number">${digits}</span>`;
+    }
+    return match;
+  });
+}
