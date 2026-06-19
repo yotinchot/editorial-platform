@@ -148,7 +148,7 @@
 /* ── Public article prose ────────────────────────────────────────────────── */
 /*
   Body: Noto Serif Thai — generous line-height for comfortable Thai reading.
-  Headings: Cormorant Garamond (--font-serif) — editorial, elegant, italic.
+  Headings: Noto Serif Thai — readable, non-italic, weight 600–700.
 */
 .article-prose {
   font-size: 1.0625rem;
@@ -158,23 +158,23 @@
 }
 
 .article-prose h2 {
-  font-family: var(--font-serif), var(--font-serif-thai), serif;
+  font-family: var(--font-serif-thai), serif;
   font-size: 1.75rem;
   font-weight: 700;
   font-style: normal;
-  line-height: 1.25;
+  line-height: 1.4;
   margin-top: 3.5rem;
   margin-bottom: 1.1rem;
   color: var(--foreground);
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
 }
 
 .article-prose h3 {
-  font-family: var(--font-serif), var(--font-serif-thai), serif;
+  font-family: var(--font-serif-thai), serif;
   font-size: 1.35rem;
   font-weight: 600;
   font-style: normal;
-  line-height: 1.35;
+  line-height: 1.45;
   margin-top: 2.5rem;
   margin-bottom: 0.7rem;
   color: var(--foreground);

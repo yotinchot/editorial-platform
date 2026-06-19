@@ -20,7 +20,7 @@ export function PostCard({ post, orientation = "vertical" }: PostCardProps) {
         <PostCover post={post} className="aspect-4/3" />
         <div className="flex flex-col justify-center">
           <PostMeta post={post} />
-          <h3 className="mt-3 font-serif text-3xl italic leading-tight transition-colors group-hover:text-accent sm:text-4xl">
+          <h3 className="mt-3 font-serif-thai font-semibold text-3xl leading-snug transition-colors group-hover:text-accent sm:text-4xl">
             {post.title}
           </h3>
           {post.excerpt ? (
@@ -35,7 +35,7 @@ export function PostCard({ post, orientation = "vertical" }: PostCardProps) {
     <Link href={href} className="group flex flex-col">
       <PostCover post={post} className="aspect-4/3" />
       <PostMeta post={post} className="mt-4" />
-      <h3 className="mt-2 font-serif text-xl leading-snug transition-colors group-hover:text-accent">
+      <h3 className="mt-2 font-serif-thai font-semibold text-xl leading-snug transition-colors group-hover:text-accent">
         {post.title}
       </h3>
       {post.excerpt ? (

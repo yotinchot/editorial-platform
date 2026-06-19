@@ -115,7 +115,7 @@ export default async function PostPage({
             </Link>
           </nav>
 
-          <h1 className="font-serif text-4xl italic leading-tight sm:text-5xl">
+          <h1 className="font-serif-thai font-semibold text-4xl leading-snug sm:text-5xl">
             {post.title}
           </h1>
 
