@@ -9,6 +9,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-serif: var(--font-serif);
+  --font-serif-thai: var(--font-serif-thai);
   --font-mono: var(--font-mono);
   --font-heading: var(--font-serif);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -177,6 +178,25 @@
   margin-top: 2.5rem;
   margin-bottom: 0.7rem;
   color: var(--foreground);
+}
+
+/*
+  Thai heading override.
+  When processArticleHeadings() detects Thai characters, it adds .heading-thai
+  to the element. This forces ALL glyphs — Thai letters, numerals, punctuation —
+  to render from Noto Serif Thai, eliminating the Cormorant/Noto weight and
+  baseline mismatch that appears in mixed-script headings like
+  "ผมหาเงินได้ 10 ล้านบาทตอนอายุ 30".
+
+  Specificity: .article-prose .heading-thai = (0,2,0) beats
+               .article-prose h2/h3       = (0,1,1)
+  so font-family is safely overridden while font-weight/size from the
+  h2/h3 rules still cascade in.
+*/
+.article-prose .heading-thai,
+.editor-prose .heading-thai {
+  font-family: var(--font-serif-thai), serif;
+  font-style: normal;
 }
 
 .article-prose p {
